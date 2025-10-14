@@ -1,4 +1,4 @@
-import { IBuyer, TPayment } from "../../../types";
+import { IBuyer, TPayment, IValidationError } from "../../types";
 
 export class Buyer {
   private payment: TPayment = '';
@@ -37,8 +37,8 @@ export class Buyer {
   }
 
   // Валидация данных
-  public validate(): { [key: string]: string } {
-    const errors: { [key: string]: string } = {};
+  public validate(): IValidationError {
+    const errors: IValidationError = {};
 
     if (!this.payment) {
       errors.payment = 'Не выбран вид оплаты';

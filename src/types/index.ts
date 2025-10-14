@@ -61,3 +61,8 @@ export interface IOrderResponse {
 export interface IApiError {
   error: string;
 }
+
+// Тип для валидации ошибки
+export interface IValidationError {
+  [key: string]: string;
+}

@@ -1,5 +1,5 @@
 // Используем тот же интерфейс IProduct, который вы предоставили
-import { IProduct } from "../../../types";
+import { IProduct } from "../../types";
 
 export class SelectedCart {
   private items: IProduct[] = [];

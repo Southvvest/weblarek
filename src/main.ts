@@ -2,11 +2,14 @@ import './scss/styles.scss';
 
 // main.ts
 
-import { ApiService } from './components/base/models/apiService';
-import { Catalog } from './components/base/models/catalog';
+import { ApiService } from './components/models/apiService';
+import { Catalog } from './components/models/catalog';
+import { API_URL } from './utils/constants';
+import { Api } from './components/base/Api';
 
 // Инициализация экземпляров
-const apiService = new ApiService(); // Класс для запросов к API
+const api = new Api(API_URL);
+const apiService = new ApiService(api); // Класс для запросов к API
 const catalog = new Catalog(); // Модель для хранения каталога товаров
 
 // Выполнение запроса на получение товаров
