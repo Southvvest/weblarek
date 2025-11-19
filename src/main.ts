@@ -1,16 +1,134 @@
 import './scss/styles.scss';
 
-// main.ts
-
 import { ApiService } from './components/models/apiService';
 import { Catalog } from './components/models/catalog';
+import { BasketModel } from './components/models/BasketModel';
+import { Buyer } from './components/models/buyer';
 import { API_URL } from './utils/constants';
 import { Api } from './components/base/Api';
+import { Gallery } from './components/views/Card/Galery';
+import { CardCatalog } from './components/views/Card/CardCatalog';
+import { cloneTemplate } from './utils/utils';
+import { IProduct, IOrder, IBuyer } from './types';
+import { EventEmitter } from './components/base/Events';
+import { Modal } from './components/views/Modals/Modal';
+import { CardPreview } from './components/views/Card/CardPreview';
+import { Basket } from './components/views/Modals/Basket';
+import { OrderForm } from './components/views/Modals/OrderForm';
+import { ContactsForm } from './components/views/Modals/ContactsForm';
+import { OrderSuccess } from './components/views/Modals/OurderSuccess';
+import { Header } from './components/views/Header';
+
+// Инициализация событий и модального окна
+const events = new EventEmitter();
+const modal = new Modal('#modal-container');
 
 // Инициализация экземпляров
 const api = new Api(API_URL);
 const apiService = new ApiService(api); // Класс для запросов к API
 const catalog = new Catalog(); // Модель для хранения каталога товаров
+const basket = new BasketModel(); // Инициализировать здесь для доступности до загрузки товаров
+const buyer = new Buyer(); // Модель для данных покупателя
+const header = new Header(events, '.header');
+header.counter = 0; // Начальный счетчик
+
+// Получаем элемент галереи из DOM (селектор передаётся в конструктор)
+const gallery = new Gallery('.gallery');
+
+// Презентер: логика после загрузки товаров
+function renderCatalog(products: IProduct[]): void {
+    const cards: HTMLElement[] = products.map((product) => {
+        const cardContainer = cloneTemplate('#card-catalog');
+        const card = new CardCatalog(cardContainer, events);
+        return card.render(product);
+    });
+    gallery.catalog = cards;
+}
+
+// Обработчик: открытие модального окна с CardPreview при выборе товара (по id)
+events.on('card:select', ({ id }: { id: string }) => {
+    const product = catalog.getProductById(id);
+    if (product) {
+        const previewContainer = cloneTemplate('#card-preview');
+        const cardPreview = new CardPreview(previewContainer, events);
+        cardPreview.render(product);
+        cardPreview.inBasket = basket.hasItem(id); // Проверка, в корзине ли товар
+        modal.contentElement = previewContainer;
+        modal.open();
+    }
+});
+
+// Обработчик: добавление товара в корзину
+events.on('basket:add', ({ id }: { id: string }) => {
+    const product = catalog.getProductById(id);
+    if (product) {
+        basket.addItem(product);
+        header.counter = basket.items.length; // Обновление счетчика (общее кол-во уникальных товаров)
+        modal.close(); // Закрытие модального окна после добавления
+    }
+});
+
+// Обработчик: открытие корзины
+events.on('basket:open', () => {
+    const basketContainer = cloneTemplate('#basket');
+    const basketView = new Basket(basketContainer, events);
+    basketView.render({ items: basket.items, total: basket.total });
+    modal.contentElement = basketContainer;
+    modal.open();
+});
+
+// Обработчик: удаление товара из корзины
+events.on('basket:remove', ({ id }: { id: string }) => {
+    basket.removeItem(id);
+    header.counter = basket.items.length; // Обновление счетчика
+    modal.close(); // Закрытие модального окна после удаления
+});
+
+// Обработчик: открытие формы заказа (способ оплаты)
+events.on('basket:order', () => {
+    const orderContainer = cloneTemplate('#order');
+    const orderForm = new OrderForm(orderContainer, events);
+    orderForm.render(buyer.getData());
+    modal.contentElement = orderContainer;
+    modal.open();
+});
+
+// Обработчик: переход к форме контактов
+events.on('order:submit', (data: Partial<IBuyer>) => {
+    buyer.setData(data);
+    const contactsContainer = cloneTemplate('#contacts');
+    const contactsForm = new ContactsForm(contactsContainer, events);
+    contactsForm.render(buyer.getData());
+    modal.contentElement = contactsContainer;
+    modal.open();
+});
+
+// Обработчик: отправка заказа
+events.on('contacts:submit', (data: Partial<IBuyer>) => {
+    buyer.setData(data);
+    const orderData: IOrder = {
+        ...buyer.getData(),
+        items: basket.items.map(p => p.id),
+        total: basket.total
+    };
+    apiService.postOrder(orderData).then(() => {
+        const total = basket.total; // Сохраняем total перед очисткой
+        basket.clear();
+        header.counter = 0;
+        const successContainer = cloneTemplate('#success');
+        const orderSuccess = new OrderSuccess(successContainer, events);
+        orderSuccess.render({ total }); // Передаём total для отображения
+        modal.contentElement = successContainer;
+        modal.open();
+    }).catch(error => {
+        console.error('Ошибка при оформлении заказа:', error);
+    });
+});
+
+// Обработчик: закрытие окна успеха
+events.on('success:close', () => {
+    modal.close();
+});
 
 // Выполнение запроса на получение товаров
 apiService.getProducts()
@@ -19,12 +137,12 @@ apiService.getProducts()
     catalog.setProducts(products);
     // Вывод сохранённого каталога в консоль для проверки
     console.log('Каталог товаров:', catalog.getProducts());
+    // Презентер: рендерим каталог после загрузки
+    renderCatalog(products);
   })
   .catch(error => {
     console.error('Ошибка при получении товаров:', error);
   });
-
-
 
 
 // // Импортируем классы

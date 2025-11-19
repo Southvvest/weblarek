@@ -1,3 +1,6 @@
+// import { CardCatalog } from "../components/views/Card/CardCatalog";
+// import { cloneTemplate } from "../utils/utils";
+
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
 export interface IApi {
@@ -35,12 +38,6 @@ export interface IOrder {
     total: number;
 }
 
-// Интерфейс для ответа на GET /product/ (массив товаров с общим количеством)
-export interface IProductResponse {
-  total: number;
-  items: IProduct[];
-}
-
 // Интерфейс для данных заказа, передаваемых на POST /order/
 export interface IOrderData {
   payment: TPayment;
@@ -66,3 +63,66 @@ export interface IApiError {
 export interface IValidationError {
   [key: string]: string;
 }
+
+export interface ICard {
+	id: string;
+	description: string;
+	image: string;
+	title: string;
+	category: string;
+	price: number | null;
+}
+
+export interface IBasket {
+	items: IProduct[];
+	total: number;
+	addItem(product: IProduct): void;
+	removeItem(id: string): void;
+	hasItem(id: string): boolean;
+	clear(): void;
+}
+
+export interface IBasketItem {
+    product: IProduct;
+    count: number;
+}
+
+// Интерфейсы для форм (данные для представлений)
+export interface IOrderFormData {
+    payment: TPayment;
+    address: string;
+}
+
+export interface IContactsFormData {
+    email: string;
+    phone: string;
+}
+
+export interface ISuccessData {
+    total: number;
+}
+
+export type BasketData = {
+    items: IProduct[];
+    total: number;
+};
+
+
+
+
+// events.on('catalog:chanhged', () => {
+//   const itemCard = productsModel.getItems().map((item) => {
+//     const card = new CardCatalog(cloneTemplate(CardCatalogTemplate),{
+//       onClick: () => EventSource.emit('card:select', item),
+//     });
+//     return card.render(item);    
+//   });
+//   gallery.render({catalog: itemsCard});
+// });
+
+//   lekerApi
+//   .getProductList()
+//   .then((data) => {
+//     productsModel.setItems(data.items);
+//   })
+//   .catch((err) => console.error(err));
