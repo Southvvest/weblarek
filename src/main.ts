@@ -6,7 +6,7 @@ import { BasketModel } from './components/models/BasketModel';
 import { Buyer } from './components/models/buyer';
 import { API_URL } from './utils/constants';
 import { Api } from './components/base/Api';
-import { Gallery } from './components/views/Card/Galery';
+import { Gallery } from './components/views/Galery';
 import { CardCatalog } from './components/views/Card/CardCatalog';
 import { cloneTemplate } from './utils/utils';
 import { IProduct, IOrder, IBuyer } from './types';
@@ -25,10 +25,10 @@ const modal = new Modal('#modal-container');
 
 // Инициализация экземпляров
 const api = new Api(API_URL);
-const apiService = new ApiService(api); // Класс для запросов к API
-const catalog = new Catalog(); // Модель для хранения каталога товаров
-const basket = new BasketModel(); // Инициализировать здесь для доступности до загрузки товаров
-const buyer = new Buyer(); // Модель для данных покупателя
+const apiService = new ApiService(api); // Теперь принимает IApi
+const catalog = new Catalog(events); // Добавлен events
+const basket = new BasketModel(events); // Добавлен events
+const buyer = new Buyer(events); // Добавлен events
 const header = new Header(events, '.header');
 header.counter = 0; // Начальный счетчик
 
@@ -51,8 +51,7 @@ events.on('card:select', ({ id }: { id: string }) => {
     if (product) {
         const previewContainer = cloneTemplate('#card-preview');
         const cardPreview = new CardPreview(previewContainer, events);
-        cardPreview.render(product);
-        cardPreview.inBasket = basket.hasItem(id); // Проверка, в корзине ли товар
+        cardPreview.render(product, basket.hasItem(id)); // Передаем статус inBasket
         modal.contentElement = previewContainer;
         modal.open();
     }
@@ -143,6 +142,9 @@ apiService.getProducts()
   .catch(error => {
     console.error('Ошибка при получении товаров:', error);
   });
+
+
+
 
 
 // // Импортируем классы

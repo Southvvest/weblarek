@@ -33,19 +33,19 @@ export class Basket extends Component<BasketData> {
         this.totalElement.textContent = `${value} синапсов`;
     }
 
-    set items(items: IProduct[]) {
-        this.listElement.innerHTML = '';
-        items.forEach((item, index) => {
-            const basketItemContainer = cloneTemplate('#card-basket');
-            const basketItem = new CardBasket(basketItemContainer, this.events);
-            basketItem.render({ ...item, index: index + 1 });
-            this.listElement.append(basketItemContainer);
-        });
-        this.orderButton.disabled = items.length === 0;
-    }
-
     render(data: BasketData): HTMLElement {
-        this.items = data.items;
+        if (data.items.length === 0) {
+            this.listElement.innerHTML = '<p>Корзина пуста</p>';
+            this.orderButton.disabled = true;
+        } else {
+            this.orderButton.disabled = false;
+            const cards: HTMLElement[] = data.items.map((item, index) => {
+                const cardContainer = cloneTemplate('#card-basket');
+                const cardBasket = new CardBasket(cardContainer, this.events);
+                return cardBasket.render({ ...item, index: index + 1 });
+            });
+            this.listElement.replaceChildren(...cards);
+        }
         this.total = data.total;
         return this.container;
     }

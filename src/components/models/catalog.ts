@@ -1,16 +1,18 @@
 // Определение интерфейса IProduct
 import { IProduct } from "../../types";
+import { IEvents } from "../base/Events";
 
 export class Catalog {
   private products: IProduct[] = [];
   private selectProduct: IProduct | null = null;
 
   // Конструктор без параметров
-  constructor() {}
+  constructor(private events: IEvents) {}
 
   // Устанавливает массив товаров
   public setProducts(products: IProduct[]): void {
     this.products = products;
+    this.events.emit('catalog:updated', this.products);
   }
 
   // Возвращает текущий массив товаров
@@ -27,6 +29,7 @@ export class Catalog {
   // Устанавливает выбранный товар для отображения
   public setSelectedProduct(product: IProduct): void {
     this.selectProduct = product;
+    this.events.emit('product:selected', this.selectProduct);
   }
 
   // Возвращает выбранный товар

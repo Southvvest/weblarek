@@ -98,14 +98,17 @@ export interface IContactsFormData {
     phone: string;
 }
 
-export interface ISuccessData {
-    total: number;
+// интерфейс IProductResponse
+export interface IProductResponse {
+    items: IProduct[];
+    total?: number;
 }
 
-export type BasketData = {
+// Интерфейс для данных корзины (для рендера в Basket)
+export interface IBasketData {
     items: IProduct[];
     total: number;
-};
+}
 
 
 

@@ -1,4 +1,5 @@
 import { IBuyer, TPayment, IValidationError } from "../../types";
+import { IEvents } from "../base/Events"; // Добавлен импорт
 
 export class Buyer {
   private payment: TPayment = '';
@@ -6,7 +7,7 @@ export class Buyer {
   private email: string = '';
   private phone: string = '';
 
-  constructor() {
+  constructor(private events: IEvents) { // Добавлен конструктор с events
     // Уже инициализировали при объявлении полей
   }
 
@@ -16,6 +17,7 @@ export class Buyer {
     if (data.address !== undefined) this.address = data.address;
     if (data.email !== undefined) this.email = data.email;
     if (data.phone !== undefined) this.phone = data.phone;
+    this.events.emit('buyer:changed', this.getData()); // Добавлен эмит события
   }
 
   // Получение всех данных в виде объекта
@@ -34,6 +36,7 @@ export class Buyer {
     this.address = '';
     this.email = '';
     this.phone = '';
+    this.events.emit('buyer:changed', this.getData()); // Добавлен эмит события
   }
 
   // Валидация данных

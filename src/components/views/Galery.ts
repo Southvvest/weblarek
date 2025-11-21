@@ -13,7 +13,7 @@
 //     }
 // }
 
-import { ensureElement } from "../../../utils/utils";
+import { ensureElement } from "../../utils/utils";
 
 export class Gallery {
     private catalogElement: HTMLElement;
@@ -24,10 +24,10 @@ export class Gallery {
     }
 
     set catalog(items: HTMLElement[]) {
-        this.catalogElement.innerHTML = '';
-        items.forEach(item => this.catalogElement.appendChild(item));
+        this.catalogElement.replaceChildren(...items);
     }
 }
+
 
 
 

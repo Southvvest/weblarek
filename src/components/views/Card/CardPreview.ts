@@ -2,18 +2,22 @@ import { Card } from "./card";
 import { IProduct } from "../../../types";
 import { IEvents } from "../../base/Events";
 import { ensureElement } from "../../../utils/utils";
+import { categoryMap } from "../../../utils/constants";
 
 export class CardPreview extends Card {
     protected descriptionElement: HTMLElement;
     protected addToBasketButton: HTMLButtonElement;
-    protected _product: IProduct | null = null; // Внутреннее свойство для хранения продукта
-    protected _inBasket: boolean = false;
+    protected id: string = '';
+    protected imageElement: HTMLImageElement;
+    protected categoryElement: HTMLElement;
 
-    constructor(container: HTMLElement, events: IEvents) {
+    constructor(container: HTMLElement, events?: IEvents) {
         super(container, events);
 
         this.descriptionElement = ensureElement<HTMLElement>('.card__text', this.container);
         this.addToBasketButton = ensureElement<HTMLButtonElement>('.card__button', this.container);
+        this.imageElement = ensureElement<HTMLImageElement>('.card__image', this.container);
+        this.categoryElement = ensureElement<HTMLElement>('.card__category', this.container);
 
         this.addToBasketButton.addEventListener('click', this.handleButtonClick.bind(this));
     }
@@ -22,27 +26,34 @@ export class CardPreview extends Card {
         this.descriptionElement.textContent = value;
     }
 
-    set inBasket(value: boolean) {
-        this._inBasket = value;
-        this.updateButton();
+    set image(value: string) {
+        this.setImage(this.imageElement, value, this.titleElement.textContent || '');
     }
 
-    protected handleButtonClick() {
-        if (this._product?.price === null) return;
-        if (this._inBasket) {
-            this.events.emit('basket:remove', { id: this._product!.id });
-            this._inBasket = false;
-            this.updateButton();
-        } else {
-            this.events.emit('basket:add', { id: this._product!.id });
+    set category(value: string) {
+        this.categoryElement.textContent = value;
+        const className = categoryMap[value as keyof typeof categoryMap];
+        if (className) {
+            this.categoryElement.classList.add(className);
         }
     }
 
-    protected updateButton() {
-        if (this._product?.price === null) {
+    protected handleButtonClick() {
+        if (this.addToBasketButton.disabled) return;
+        if (this.priceElement.textContent === 'Бесценно') return;
+        const isInBasket = this.addToBasketButton.textContent === 'Удалить';
+        if (isInBasket) {
+            this.events!.emit('basket:remove', { id: this.id });
+        } else {
+            this.events!.emit('basket:add', { id: this.id });
+        }
+    }
+
+    public updateButton(value: boolean) {  // Изменено с protected на public
+        if (this.priceElement.textContent === 'Бесценно') {
             this.addToBasketButton.textContent = 'Недоступно';
             this.addToBasketButton.disabled = true;
-        } else if (this._inBasket) {
+        } else if (value) {
             this.addToBasketButton.textContent = 'Удалить';
             this.addToBasketButton.disabled = false;
         } else {
@@ -51,12 +62,13 @@ export class CardPreview extends Card {
         }
     }
 
-    render(product: IProduct): HTMLElement {
-        this._product = product; // Сохраняем продукт внутренне
-        const rendered = super.render(product);
+    render(product: IProduct, inBasket: boolean = false): HTMLElement {
+        this.id = product.id;
+        super.render(product);
         this.description = product.description;
-        this._inBasket = false; // Сброс, будет установлено через set inBasket в main.ts
-        this.updateButton();
-        return rendered;
+        this.image = product.image;
+        this.category = product.category;
+        this.updateButton(inBasket);
+        return this.container;
     }
 }
