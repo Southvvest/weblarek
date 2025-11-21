@@ -1,35 +1,39 @@
+import { Component } from "../../base/Component";
+import { IEvents } from "../../base/Events";
 import { ensureElement } from "../../../utils/utils";
 
-export class Modal {
-    protected modal: HTMLElement;
+export class Modal extends Component<unknown> {
+    protected contentSlot: HTMLElement;
     protected closeButton: HTMLElement;
+    protected events?: IEvents;
 
-    constructor(selector: string) {
-        this.modal = ensureElement(selector);
-        this.closeButton = ensureElement<HTMLElement>('.modal__close', this.modal);
+    constructor(container: HTMLElement, events?: IEvents) {
+        super(container);
+        this.events = events;
+        this.contentSlot = ensureElement<HTMLElement>('.modal__content', this.container);
+        this.closeButton = ensureElement<HTMLElement>('.modal__close', this.container);
+
         this.closeButton.addEventListener('click', () => this.close());
 
         // Закрытие по overlay (проверка target внутри container)
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) this.close();
+        this.container.addEventListener('click', (e) => {
+            if (e.target === this.container) this.close();
         });
     }
 
     set contentElement(element: HTMLElement) {
-        const contentSlot = ensureElement<HTMLElement>('.modal__content', this.modal);
-        contentSlot.innerHTML = '';
-        contentSlot.append(element);
+        this.contentSlot.innerHTML = '';
+        this.contentSlot.append(element);
     }
 
     open(): void {
-        this.modal.classList.add('modal_active');
-        document.body.style.overflow = 'hidden';
+        this.container.classList.add('modal_active');
+        this.events?.emit('modal:open');
     }
 
     close(): void {
-        this.modal.classList.remove('modal_active');
-        document.body.style.overflow = '';
-        const contentSlot = ensureElement<HTMLElement>('.modal__content', this.modal);
-        contentSlot.innerHTML = ''; // Очистка содержимого
+        this.container.classList.remove('modal_active');
+        this.events?.emit('modal:close');
+        this.contentSlot.innerHTML = ''; // Очистка содержимого
     }
 }

@@ -18,9 +18,9 @@ import { ensureElement } from "../../utils/utils";
 export class Gallery {
     private catalogElement: HTMLElement;
 
-    // Конструктор принимает string (селектор), использует ensureElement внутри
-    constructor(selector: string) {
-        this.catalogElement = ensureElement<HTMLElement>(selector);
+    // Конструктор принимает HTMLElement
+    constructor(container: HTMLElement) {
+        this.catalogElement = container;
     }
 
     set catalog(items: HTMLElement[]) {

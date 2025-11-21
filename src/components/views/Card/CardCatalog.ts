@@ -1,5 +1,5 @@
 import { Card } from "./card";
-import { IProduct } from "../../../types";
+// import { IProduct } from "../../../types";
 import { IEvents } from "../../base/Events";
 import { ensureElement } from "../../../utils/utils";
 import { categoryMap } from "../../../utils/constants";

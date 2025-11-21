@@ -3,7 +3,7 @@ import { IProduct } from "../../../types";
 import { IEvents } from "../../base/Events";
 import { ensureElement } from "../../../utils/utils";
 import { cloneTemplate } from "../../../utils/utils";
-import { CardBasket } from "../Card/CardBasket";
+// import { CardBasket } from "../Card/CardBasket";
 
 type BasketData = {
     items: IProduct[];
@@ -39,12 +39,23 @@ export class Basket extends Component<BasketData> {
             this.orderButton.disabled = true;
         } else {
             this.orderButton.disabled = false;
-            const cards: HTMLElement[] = data.items.map((item, index) => {
-                const cardContainer = cloneTemplate('#card-basket');
-                const cardBasket = new CardBasket(cardContainer, this.events);
-                return cardBasket.render({ ...item, index: index + 1 });
+            this.listElement.innerHTML = ''; // Очистка списка
+            data.items.forEach((item, index) => {
+                const cardContainer = cloneTemplate('#card-basket') as HTMLElement;
+                // Заполнение данных вручную без создания компонента
+                const titleElement = ensureElement<HTMLElement>('.card__title', cardContainer);
+                titleElement.textContent = item.title;
+                const priceElement = ensureElement<HTMLElement>('.card__price', cardContainer);
+                priceElement.textContent = `${item.price} синапсов`;
+                const indexElement = ensureElement<HTMLElement>('.basket__item-index', cardContainer);
+                indexElement.textContent = (index + 1).toString();
+                // Добавление обработчика удаления
+                const deleteButton = ensureElement<HTMLButtonElement>('.basket__item-delete', cardContainer);
+                deleteButton.addEventListener('click', () => {
+                    this.events.emit('basket:remove', { id: item.id });
+                });
+                this.listElement.append(cardContainer);
             });
-            this.listElement.replaceChildren(...cards);
         }
         this.total = data.total;
         return this.container;

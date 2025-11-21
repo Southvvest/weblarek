@@ -9,7 +9,7 @@ import { Api } from './components/base/Api';
 import { Gallery } from './components/views/Galery';
 import { CardCatalog } from './components/views/Card/CardCatalog';
 import { cloneTemplate } from './utils/utils';
-import { IProduct, IOrder, IBuyer } from './types';
+import { IProduct, IOrder, IBuyer, TPayment, IValidationError } from './types';
 import { EventEmitter } from './components/base/Events';
 import { Modal } from './components/views/Modals/Modal';
 import { CardPreview } from './components/views/Card/CardPreview';
@@ -18,10 +18,11 @@ import { OrderForm } from './components/views/Modals/OrderForm';
 import { ContactsForm } from './components/views/Modals/ContactsForm';
 import { OrderSuccess } from './components/views/Modals/OurderSuccess';
 import { Header } from './components/views/Header';
+import { ensureElement } from './utils/utils';
 
 // Инициализация событий и модального окна
 const events = new EventEmitter();
-const modal = new Modal('#modal-container');
+const modal = new Modal(ensureElement('#modal-container'), events);
 
 // Инициализация экземпляров
 const api = new Api(API_URL);
@@ -29,11 +30,30 @@ const apiService = new ApiService(api); // Теперь принимает IApi
 const catalog = new Catalog(events); // Добавлен events
 const basket = new BasketModel(events); // Добавлен events
 const buyer = new Buyer(events); // Добавлен events
-const header = new Header(events, '.header');
+// Передача HTMLElement
+const headerElement = ensureElement('.header');
+const header = new Header(events, headerElement);
 header.counter = 0; // Начальный счетчик
 
-// Получаем элемент галереи из DOM (селектор передаётся в конструктор)
-const gallery = new Gallery('.gallery');
+// Передача HTMLElement
+const galleryElement = ensureElement('.gallery');
+const gallery = new Gallery(galleryElement);
+
+// Ссылки на текущие формы для обновления
+let orderForm: OrderForm | null = null;
+let contactsForm: ContactsForm | null = null;
+
+// Функция обновления текущей открытой формы
+function updateCurrentForm(): void {
+  const data = buyer.getData();
+  const errors = buyer.validate();
+  if (orderForm?.container.parentElement) {
+    orderForm.render({ ...data, errors });
+  }
+  if (contactsForm?.container.parentElement) {
+    contactsForm.render({ ...data, errors });
+  }
+}
 
 // Презентер: логика после загрузки товаров
 function renderCatalog(products: IProduct[]): void {
@@ -44,6 +64,36 @@ function renderCatalog(products: IProduct[]): void {
     });
     gallery.catalog = cards;
 }
+
+// Обработчики событий
+events.on('modal:open', () => {
+    document.body.style.overflow = 'hidden';
+});
+
+events.on('modal:close', () => {
+    document.body.style.overflow = '';
+});
+
+// Обработчик: изменение данных покупателя (из форм)
+events.on('buyer:payment', ({ payment }: { payment: TPayment }) => {
+    buyer.setData({ payment });
+});
+
+events.on('buyer:address', ({ address }: { address: string }) => {
+    buyer.setData({ address });
+});
+
+events.on('buyer:email', ({ email }: { email: string }) => {
+    buyer.setData({ email });
+});
+
+events.on('buyer:phone', ({ phone }: { phone: string }) => {
+    buyer.setData({ phone });
+});
+
+events.on('buyer:changed', () => {
+    updateCurrentForm();
+});
 
 // Обработчик: открытие модального окна с CardPreview при выборе товара (по id)
 events.on('card:select', ({ id }: { id: string }) => {
@@ -62,63 +112,80 @@ events.on('basket:add', ({ id }: { id: string }) => {
     const product = catalog.getProductById(id);
     if (product) {
         basket.addItem(product);
-        header.counter = basket.items.length; // Обновление счетчика (общее кол-во уникальных товаров)
+        // header.counter = basket.items.length; // Обновление счетчика (общее кол-во уникальных товаров)
         modal.close(); // Закрытие модального окна после добавления
     }
 });
 
 // Обработчик: открытие корзины
 events.on('basket:open', () => {
-    const basketContainer = cloneTemplate('#basket');
-    const basketView = new Basket(basketContainer, events);
-    basketView.render({ items: basket.items, total: basket.total });
-    modal.contentElement = basketContainer;
+    // const basketContainer = cloneTemplate('#basket');
+    // const basketView = new Basket(basketContainer, events);
+    // basketView.render({ items: basket.items, total: basket.total });
+    modal.contentElement = basketView.container; // Используем глобальный экземпляр (рендер в 'basket:changed')
     modal.open();
 });
 
 // Обработчик: удаление товара из корзины
 events.on('basket:remove', ({ id }: { id: string }) => {
     basket.removeItem(id);
-    header.counter = basket.items.length; // Обновление счетчика
+    // header.counter = basket.items.length; // Обновление счетчика
     modal.close(); // Закрытие модального окна после удаления
 });
 
 // Обработчик: открытие формы заказа (способ оплаты)
 events.on('basket:order', () => {
     const orderContainer = cloneTemplate('#order');
-    const orderForm = new OrderForm(orderContainer, events);
-    orderForm.render(buyer.getData());
-    modal.contentElement = orderContainer;
+    orderForm = new OrderForm(orderContainer, events);
+    orderForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Render с данными и ошибками через объект
+    modal.contentElement = orderContainer; // Установка через render() компонента (orderContainer уже отрендерен)
     modal.open();
+    contactsForm = null;
 });
 
 // Обработчик: переход к форме контактов
-events.on('order:submit', (data: Partial<IBuyer>) => {
-    buyer.setData(data);
+events.on('order:submit', () => {
+    const errors = buyer.validate();
+    const relevantErrors = ['payment', 'address'].filter(key => errors[key as keyof IValidationError]);
+    if (relevantErrors.length > 0) {
+        if (orderForm?.container.parentElement) {
+            orderForm.render({ ...buyer.getData(), errors });
+        }
+        return;
+    }
     const contactsContainer = cloneTemplate('#contacts');
-    const contactsForm = new ContactsForm(contactsContainer, events);
-    contactsForm.render(buyer.getData());
-    modal.contentElement = contactsContainer;
+    contactsForm = new ContactsForm(contactsContainer, events);
+    contactsForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Render с данными и ошибками через объект
+    modal.contentElement = contactsContainer; // Установка через render() компонента (contactsContainer уже отрендерен)
     modal.open();
+    orderForm = null;
 });
 
 // Обработчик: отправка заказа
-events.on('contacts:submit', (data: Partial<IBuyer>) => {
-    buyer.setData(data);
+events.on('contacts:submit', () => {
+    const errors = buyer.validate();
+    const relevantErrors = ['email', 'phone'].filter(key => errors[key as keyof IValidationError]);
+    if (relevantErrors.length > 0) {
+        if (contactsForm?.container.parentElement) {
+            contactsForm.render({ ...buyer.getData(), errors });
+        }
+        return;
+    }
     const orderData: IOrder = {
         ...buyer.getData(),
         items: basket.items.map(p => p.id),
         total: basket.total
     };
-    apiService.postOrder(orderData).then(() => {
-        const total = basket.total; // Сохраняем total перед очисткой
+    apiService.postOrder(orderData).then((response) => {
+        const total = response.total; // Используем total из ответа сервера для отображения
         basket.clear();
         header.counter = 0;
         const successContainer = cloneTemplate('#success');
         const orderSuccess = new OrderSuccess(successContainer, events);
-        orderSuccess.render({ total }); // Передаём total для отображения
-        modal.contentElement = successContainer;
+        orderSuccess.render({ total }); // Передача total для отображения суммы от сервера
+        modal.contentElement = successContainer; // Установка через render() компонента (successContainer уже отрендерен)
         modal.open();
+        contactsForm = null;
     }).catch(error => {
         console.error('Ошибка при оформлении заказа:', error);
     });
@@ -129,6 +196,17 @@ events.on('success:close', () => {
     modal.close();
 });
 
+// Обработчик изменения корзины для обновления счетчика и рендера
+events.on('basket:changed', () => {
+    header.counter = basket.items.length; // Обновление счетчика в обработчике события изменения модели (используем метод модели)
+    basketView.render({ items: basket.items, total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
+});
+
+// Глобальные экземпляры статичных компонентов
+const basketContainer = cloneTemplate('#basket');
+const basketView = new Basket(basketContainer, events); // Создание экземпляра один раз
+basketView.render({ items: basket.items, total: basket.total }); // Начальный рендер (пустая корзина)
+
 // Выполнение запроса на получение товаров
 apiService.getProducts()
   .then(products => {
@@ -136,16 +214,16 @@ apiService.getProducts()
     catalog.setProducts(products);
     // Вывод сохранённого каталога в консоль для проверки
     console.log('Каталог товаров:', catalog.getProducts());
-    // Презентер: рендерим каталог после загрузки
-    renderCatalog(products);
+    // renderCatalog(products);
   })
   .catch(error => {
     console.error('Ошибка при получении товаров:', error);
   });
 
-
-
-
+// Обработчик изменения каталога
+events.on('catalog:updated', (products: IProduct[]) => {
+    renderCatalog(products); // Рендер каталога после события от модели
+});
 
 // // Импортируем классы
 // import { Catalog } from './components/base/models/catalog';
