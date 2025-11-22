@@ -42,15 +42,16 @@ const gallery = new Gallery(galleryElement);
 // Ссылки на текущие формы для обновления
 let orderForm: OrderForm | null = null;
 let contactsForm: ContactsForm | null = null;
+let currentPreview: CardPreview | null = null; // Для обновления кнопки в открытом preview
 
 // Функция обновления текущей открытой формы
 function updateCurrentForm(): void {
   const data = buyer.getData();
   const errors = buyer.validate();
-  if (orderForm?.container.parentElement) {
+  if (orderForm?.getContainer().parentElement) {
     orderForm.render({ ...data, errors });
   }
-  if (contactsForm?.container.parentElement) {
+  if (contactsForm?.getContainer().parentElement) {
     contactsForm.render({ ...data, errors });
   }
 }
@@ -72,6 +73,7 @@ events.on('modal:open', () => {
 
 events.on('modal:close', () => {
     document.body.style.overflow = '';
+    currentPreview = null; // Сброс при закрытии модала
 });
 
 // Обработчик: изменение данных покупателя (из форм)
@@ -103,6 +105,7 @@ events.on('card:select', ({ id }: { id: string }) => {
         const cardPreview = new CardPreview(previewContainer, events);
         cardPreview.render(product, basket.hasItem(id)); // Передаем статус inBasket
         modal.contentElement = previewContainer;
+        currentPreview = cardPreview; // Сохраняем ссылку для обновления
         modal.open();
     }
 });
@@ -113,7 +116,7 @@ events.on('basket:add', ({ id }: { id: string }) => {
     if (product) {
         basket.addItem(product);
         // header.counter = basket.items.length; // Обновление счетчика (общее кол-во уникальных товаров)
-        modal.close(); // Закрытие модального окна после добавления
+        // modal.close(); // Закрытие модального окна после добавления — удалено, модал остается открытым
     }
 });
 
@@ -122,7 +125,7 @@ events.on('basket:open', () => {
     // const basketContainer = cloneTemplate('#basket');
     // const basketView = new Basket(basketContainer, events);
     // basketView.render({ items: basket.items, total: basket.total });
-    modal.contentElement = basketView.container; // Используем глобальный экземпляр (рендер в 'basket:changed')
+    modal.contentElement = basketView.getContainer(); // Используем глобальный экземпляр (рендер в 'basket:changed')
     modal.open();
 });
 
@@ -130,7 +133,9 @@ events.on('basket:open', () => {
 events.on('basket:remove', ({ id }: { id: string }) => {
     basket.removeItem(id);
     // header.counter = basket.items.length; // Обновление счетчика
-    modal.close(); // Закрытие модального окна после удаления
+    // if (!(currentPreview && currentPreview.id === id)) { // Исправлено: currentPreview.id теперь публичный геттер
+    //     modal.close(); // Закрываем только если удаление не из preview (т.е. из basket)
+    // }
 });
 
 // Обработчик: открытие формы заказа (способ оплаты)
@@ -138,7 +143,7 @@ events.on('basket:order', () => {
     const orderContainer = cloneTemplate('#order');
     orderForm = new OrderForm(orderContainer, events);
     orderForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Render с данными и ошибками через объект
-    modal.contentElement = orderContainer; // Установка через render() компонента (orderContainer уже отрендерен)
+    modal.contentElement = orderForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Установка через render() компонента (orderContainer уже отрендерен)
     modal.open();
     contactsForm = null;
 });
@@ -148,7 +153,7 @@ events.on('order:submit', () => {
     const errors = buyer.validate();
     const relevantErrors = ['payment', 'address'].filter(key => errors[key as keyof IValidationError]);
     if (relevantErrors.length > 0) {
-        if (orderForm?.container.parentElement) {
+        if (orderForm?.getContainer().parentElement) {
             orderForm.render({ ...buyer.getData(), errors });
         }
         return;
@@ -156,7 +161,7 @@ events.on('order:submit', () => {
     const contactsContainer = cloneTemplate('#contacts');
     contactsForm = new ContactsForm(contactsContainer, events);
     contactsForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Render с данными и ошибками через объект
-    modal.contentElement = contactsContainer; // Установка через render() компонента (contactsContainer уже отрендерен)
+    modal.contentElement = contactsForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Установка через render() компонента (contactsContainer уже отрендерен)
     modal.open();
     orderForm = null;
 });
@@ -166,7 +171,7 @@ events.on('contacts:submit', () => {
     const errors = buyer.validate();
     const relevantErrors = ['email', 'phone'].filter(key => errors[key as keyof IValidationError]);
     if (relevantErrors.length > 0) {
-        if (contactsForm?.container.parentElement) {
+        if (contactsForm?.getContainer().parentElement) {
             contactsForm.render({ ...buyer.getData(), errors });
         }
         return;
@@ -200,6 +205,10 @@ events.on('success:close', () => {
 events.on('basket:changed', () => {
     header.counter = basket.items.length; // Обновление счетчика в обработчике события изменения модели (используем метод модели)
     basketView.render({ items: basket.items, total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
+    if (currentPreview) {
+        const inBasket = basket.hasItem(currentPreview.id); // Исправлено: currentPreview.id теперь публичный геттер
+        currentPreview.updateButton(inBasket); // Обновление кнопки в открытом preview (возврат в "В корзину" после remove)
+    }
 });
 
 // Глобальные экземпляры статичных компонентов
@@ -224,6 +233,8 @@ apiService.getProducts()
 events.on('catalog:updated', (products: IProduct[]) => {
     renderCatalog(products); // Рендер каталога после события от модели
 });
+
+
 
 // // Импортируем классы
 // import { Catalog } from './components/base/models/catalog';

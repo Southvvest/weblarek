@@ -1,8 +1,8 @@
 import { Card } from "./card";
-// import { IProduct } from "../../../types";
+import { IProduct } from "../../../types";
 import { IEvents } from "../../base/Events";
 import { ensureElement } from "../../../utils/utils";
-import { categoryMap } from "../../../utils/constants";
+import { categoryMap, CDN_URL } from "../../../utils/constants";
 
 export class CardCatalog extends Card {
     protected id: string = '';
@@ -25,7 +25,7 @@ export class CardCatalog extends Card {
     }
 
     set image(value: string) {
-        this.imageElement.src = value;
+        this.imageElement.src = CDN_URL + value;
         this.imageElement.alt = this.titleElement.textContent || '';
     }
 
@@ -36,5 +36,11 @@ export class CardCatalog extends Card {
         if (className) {
             this.categoryElement.classList.add(className);
         }
+    }
+
+    render(product: IProduct): HTMLElement {
+        this.id = product.id;
+        super.render(product);
+        return this.container;
     }
 }

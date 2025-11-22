@@ -47,7 +47,7 @@ export class Buyer {
       errors.payment = 'Не выбран вид оплаты';
     }
     if (!this.address.trim()) {
-      errors.address = 'Укажите адрес доставки';
+      errors.address = 'Необходимо указать адрес';
     }
     if (!this.email.trim()) {
       errors.email = 'Укажите email';

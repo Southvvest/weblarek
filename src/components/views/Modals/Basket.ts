@@ -46,7 +46,7 @@ export class Basket extends Component<BasketData> {
                 const titleElement = ensureElement<HTMLElement>('.card__title', cardContainer);
                 titleElement.textContent = item.title;
                 const priceElement = ensureElement<HTMLElement>('.card__price', cardContainer);
-                priceElement.textContent = `${item.price} синапсов`;
+                priceElement.textContent = item.price !== null ? `${item.price} синапсов` : 'Бесценно'; // Исправлено для null price
                 const indexElement = ensureElement<HTMLElement>('.basket__item-index', cardContainer);
                 indexElement.textContent = (index + 1).toString();
                 // Добавление обработчика удаления

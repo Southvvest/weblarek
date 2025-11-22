@@ -2,12 +2,12 @@ import { Card } from "./card";
 import { IProduct } from "../../../types";
 import { IEvents } from "../../base/Events";
 import { ensureElement } from "../../../utils/utils";
-import { categoryMap } from "../../../utils/constants";
+import { categoryMap, CDN_URL } from "../../../utils/constants";
 
 export class CardPreview extends Card {
     protected descriptionElement: HTMLElement;
     protected addToBasketButton: HTMLButtonElement;
-    protected id: string = '';
+    public id: string = ''; // Сделано public для доступа из main.ts
     protected imageElement: HTMLImageElement;
     protected categoryElement: HTMLElement;
 
@@ -27,7 +27,7 @@ export class CardPreview extends Card {
     }
 
     set image(value: string) {
-        this.setImage(this.imageElement, value, this.titleElement.textContent || '');
+        this.setImage(this.imageElement, CDN_URL + value, this.titleElement.textContent || '');
     }
 
     set category(value: string) {
