@@ -1,5 +1,5 @@
 import { IBasket, IProduct } from '../../types';
-import { IEvents } from '../base/events'; // Добавлен импорт
+import { IEvents } from '../base/events';
 
 export class BasketModel implements IBasket {
     private _items: IProduct[] = [];

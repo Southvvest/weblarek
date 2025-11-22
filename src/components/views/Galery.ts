@@ -13,7 +13,7 @@
 //     }
 // }
 
-import { ensureElement } from "../../utils/utils";
+// import { ensureElement } from "../../utils/utils";
 
 export class Gallery {
     private catalogElement: HTMLElement;
