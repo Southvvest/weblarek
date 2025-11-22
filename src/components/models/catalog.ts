@@ -1,4 +1,3 @@
-// Определение интерфейса IProduct
 import { IProduct } from "../../types";
 import { IEvents } from "../base/events";
 

@@ -1,11 +1,11 @@
 import { IApi } from '../../types';
 // import { API_URL } from '../../utils/constants'; // Импорт константы API_URL
-import { IProduct, IProductResponse, IOrder, IOrderResponse, IApiError  } from '../../types'; // Импорт типов
+import { IProduct, IProductResponse, IOrder, IOrderResponse, IApiError  } from '../../types';
 
 export class ApiService {
-    private api: IApi; // Теперь IApi вместо Api
+    private api: IApi;
 
-    constructor(api: IApi) { // Принимает IApi
+    constructor(api: IApi) {
         this.api = api;
     }
 
