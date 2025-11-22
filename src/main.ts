@@ -6,7 +6,7 @@ import { BasketModel } from './components/models/basketModel';
 import { Buyer } from './components/models/buyer';
 import { API_URL } from './utils/constants';
 import { Api } from './components/base/api';
-import { Gallery } from './components/views/galery';
+import { Gallery } from './components/views/gallery';
 import { CardCatalog } from './components/views/card/cardCatalog';
 import { cloneTemplate } from './utils/utils';
 import { IProduct, IOrder, TPayment, IValidationError } from './types';
