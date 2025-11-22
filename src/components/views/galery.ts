@@ -27,7 +27,3 @@ export class Gallery {
         this.catalogElement.replaceChildren(...items);
     }
 }
-
-
-
-
