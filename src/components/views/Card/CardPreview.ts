@@ -1,6 +1,6 @@
 import { Card } from "./card";
 import { IProduct } from "../../../types";
-import { IEvents } from "../../base/Events";
+import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 import { categoryMap, CDN_URL } from "../../../utils/constants";
 

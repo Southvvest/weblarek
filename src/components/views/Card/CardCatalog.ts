@@ -1,6 +1,6 @@
 import { Card } from "./card";
 import { IProduct } from "../../../types";
-import { IEvents } from "../../base/Events";
+import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 import { categoryMap, CDN_URL } from "../../../utils/constants";
 
@@ -41,6 +41,8 @@ export class CardCatalog extends Card {
     render(product: IProduct): HTMLElement {
         this.id = product.id;
         super.render(product);
+        this.image = product.image;
+        this.category = product.category;
         return this.container;
     }
 }

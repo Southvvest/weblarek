@@ -2,22 +2,22 @@ import './scss/styles.scss';
 
 import { ApiService } from './components/models/apiService';
 import { Catalog } from './components/models/catalog';
-import { BasketModel } from './components/models/BasketModel';
+import { BasketModel } from './components/models/basketModel';
 import { Buyer } from './components/models/buyer';
 import { API_URL } from './utils/constants';
-import { Api } from './components/base/Api';
-import { Gallery } from './components/views/Galery';
-import { CardCatalog } from './components/views/Card/CardCatalog';
+import { Api } from './components/base/api';
+import { Gallery } from './components/views/galery';
+import { CardCatalog } from './components/views/Card/cardCatalog';
 import { cloneTemplate } from './utils/utils';
-import { IProduct, IOrder, IBuyer, TPayment, IValidationError } from './types';
-import { EventEmitter } from './components/base/Events';
-import { Modal } from './components/views/Modals/Modal';
-import { CardPreview } from './components/views/Card/CardPreview';
-import { Basket } from './components/views/Modals/Basket';
-import { OrderForm } from './components/views/Modals/OrderForm';
-import { ContactsForm } from './components/views/Modals/ContactsForm';
-import { OrderSuccess } from './components/views/Modals/OurderSuccess';
-import { Header } from './components/views/Header';
+import { IProduct, IOrder, TPayment, IValidationError } from './types';
+import { EventEmitter } from './components/base/events';
+import { Modal } from './components/views/Modals/modal';
+import { CardPreview } from './components/views/Card/cardPreview';
+import { Basket } from './components/views/Modals/basket';
+import { OrderForm } from './components/views/Modals/orderForm';
+import { ContactsForm } from './components/views/Modals/contactsForm';
+import { OrderSuccess } from './components/views/Modals/orderSuccess';
+import { Header } from './components/views/header';
 import { ensureElement } from './utils/utils';
 
 // Инициализация событий и модального окна

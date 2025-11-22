@@ -1,6 +1,6 @@
-import { Component } from "../../base/Component";
+import { Component } from "../../base/component";
 import { IBuyer, IValidationError } from "../../../types";
-import { IEvents } from "../../base/Events";
+import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 
 type ContactsFormData = Partial<IBuyer> & { errors?: IValidationError };

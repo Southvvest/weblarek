@@ -1,6 +1,6 @@
 // Определение интерфейса IProduct
 import { IProduct } from "../../types";
-import { IEvents } from "../base/Events";
+import { IEvents } from "../base/events";
 
 export class Catalog {
   private products: IProduct[] = [];

@@ -1,5 +1,5 @@
-import { Component } from "../../base/Component";
-import { IEvents } from "../../base/Events";
+import { Component } from "../../base/component";
+import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 
 interface ISuccessData {
