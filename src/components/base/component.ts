@@ -24,8 +24,8 @@ export abstract class Component<T> {
         return this.container;
     }
 
-    // Публичный геттер для доступа к container без нарушения инкапсуляции
-    public getContainer(): HTMLElement {
-        return this.container;
-    }
+    // // Публичный геттер для доступа к container без нарушения инкапсуляции
+    // public getContainer(): HTMLElement {
+    //     return this.container;
+    // }
 }

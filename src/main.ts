@@ -19,6 +19,7 @@ import { ContactsForm } from './components/views/modals/contactsForm';
 import { OrderSuccess } from './components/views/modals/orderSuccess';
 import { Header } from './components/views/header';
 import { ensureElement } from './utils/utils';
+import { SelectedCart } from './components/models/selectedCard';
 
 // Инициализация событий и модального окна
 const events = new EventEmitter();
@@ -43,15 +44,16 @@ const gallery = new Gallery(galleryElement);
 let orderForm: OrderForm | null = null;
 let contactsForm: ContactsForm | null = null;
 let currentPreview: CardPreview | null = null; // Для обновления кнопки в открытом preview
+let currentPreviewId: string | null = null; // Новая переменная для хранения id текущего preview без прямого доступа к полю
 
 // Функция обновления текущей открытой формы
 function updateCurrentForm(): void {
   const data = buyer.getData();
   const errors = buyer.validate();
-  if (orderForm?.getContainer().parentElement) {
+  if (orderForm) {
     orderForm.render({ ...data, errors });
   }
-  if (contactsForm?.getContainer().parentElement) {
+  if (contactsForm) {
     contactsForm.render({ ...data, errors });
   }
 }
@@ -74,6 +76,7 @@ events.on('modal:open', () => {
 events.on('modal:close', () => {
     document.body.style.overflow = '';
     currentPreview = null; // Сброс при закрытии модала
+    currentPreviewId = null; // Сброс id
 });
 
 // Обработчик: изменение данных покупателя (из форм)
@@ -106,6 +109,7 @@ events.on('card:select', ({ id }: { id: string }) => {
         cardPreview.render(product, basket.hasItem(id)); // Передаем статус inBasket
         modal.contentElement = previewContainer;
         currentPreview = cardPreview; // Сохраняем ссылку для обновления
+        currentPreviewId = id; // Сохраняем id для доступа без геттера
         modal.open();
     }
 });
@@ -125,7 +129,7 @@ events.on('basket:open', () => {
     // const basketContainer = cloneTemplate('#basket');
     // const basketView = new Basket(basketContainer, events);
     // basketView.render({ items: basket.items, total: basket.total });
-    modal.contentElement = basketView.getContainer(); // Используем глобальный экземпляр (рендер в 'basket:changed')
+    modal.contentElement = basketContainer; // Используем глобальный экземпляр (рендер в 'basket:changed')
     modal.open();
 });
 
@@ -133,7 +137,7 @@ events.on('basket:open', () => {
 events.on('basket:remove', ({ id }: { id: string }) => {
     basket.removeItem(id);
     // header.counter = basket.items.length; // Обновление счетчика
-    // if (!(currentPreview && currentPreview.id === id)) { // Исправлено: currentPreview.id теперь публичный геттер
+    // if (!(currentPreview && currentPreview.id === id)) { // Исправлено: проверка через currentPreviewId
     //     modal.close(); // Закрываем только если удаление не из preview (т.е. из basket)
     // }
 });
@@ -153,7 +157,7 @@ events.on('order:submit', () => {
     const errors = buyer.validate();
     const relevantErrors = ['payment', 'address'].filter(key => errors[key as keyof IValidationError]);
     if (relevantErrors.length > 0) {
-        if (orderForm?.getContainer().parentElement) {
+        if (orderForm) {
             orderForm.render({ ...buyer.getData(), errors });
         }
         return;
@@ -171,7 +175,7 @@ events.on('contacts:submit', () => {
     const errors = buyer.validate();
     const relevantErrors = ['email', 'phone'].filter(key => errors[key as keyof IValidationError]);
     if (relevantErrors.length > 0) {
-        if (contactsForm?.getContainer().parentElement) {
+        if (contactsForm) {
             contactsForm.render({ ...buyer.getData(), errors });
         }
         return;
@@ -205,9 +209,9 @@ events.on('success:close', () => {
 events.on('basket:changed', () => {
     header.counter = basket.items.length; // Обновление счетчика в обработчике события изменения модели (используем метод модели)
     basketView.render({ items: basket.items, total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
-    if (currentPreview) {
-        const inBasket = basket.hasItem(currentPreview.id); // Исправлено: currentPreview.id теперь публичный геттер
-        currentPreview.updateButton(inBasket); // Обновление кнопки в открытом preview (возврат в "В корзину" после remove)
+    if (currentPreview && currentPreviewId) {
+        const inBasket = basket.hasItem(currentPreviewId); // Проверка через currentPreviewId вместо геттера
+        currentPreview.updateButton(inBasket); // Теперь работает, так как метод public
     }
 });
 
@@ -233,98 +237,3 @@ apiService.getProducts()
 events.on('catalog:updated', (products: IProduct[]) => {
     renderCatalog(products); // Рендер каталога после события от модели
 });
-
-
-
-// // Импортируем классы
-// import { Catalog } from './components/base/models/catalog';
-// import { Buyer } from './components/base/models/buyer';
-// import { SelectedCart } from './components/base/models/selectedCart';
-
-// // Импортируем тестовые данные
-// import { apiProducts } from './utils/data';
-
-// console.log('=== Начало тестирования моделей данных ===');
-
-// // Создание экземпляров классов
-// const catalog = new Catalog();
-// const buyer = new Buyer();
-// const selectedCart = new SelectedCart();
-
-// // Тестирование Catalog
-// console.log('\n--- Тестирование Catalog ---');
-
-// // Установка товаров
-// catalog.setProducts(apiProducts.items);
-// console.log('Установлены товары в каталог:', catalog.getProducts());
-
-// // Получение товаров
-// console.log('Получение всех товаров из каталога:', catalog.getProducts());
-
-// // Поиск товара по ID (возьмем первый товар из массива, если он есть)
-// if (apiProducts.items.length > 0) {
-//   const firstProduct = apiProducts.items[0];
-//   console.log(`Поиск товара по ID "${firstProduct.id}":`, catalog.getProductById(firstProduct.id));
-  
-//   // Установка выбранного товара
-//   catalog.setSelectedProduct(firstProduct);
-//   console.log('Установлен выбранный товар:', catalog.getSelectedProduct());
-// }
-
-// // Тестирование Buyer
-// console.log('\n--- Тестирование Buyer ---');
-
-// // Установка данных
-// buyer.setData({
-//   payment: 'card',
-//   address: 'ул. Ленина, 10',
-//   email: 'test@example.com',
-//   phone: '+7 123 456 78 90'
-// });
-// console.log('Установлены данные покупателя:', buyer.getData());
-
-// // Валидация данных
-// const validationErrors = buyer.validate();
-// console.log('Ошибки валидации:', validationErrors);
-
-// // Очистка данных
-// buyer.clearData();
-// console.log('После очистки данных:', buyer.getData());
-
-// // Повторная валидация после очистки
-// const validationErrorsAfterClear = buyer.validate();
-// console.log('Ошибки валидации после очистки:', validationErrorsAfterClear);
-
-// // Тестирование SelectedCart
-// console.log('\n--- Тестирование SelectedCart ---');
-
-// // Добавление товаров в корзину (возьмем первые два товара, если они есть)
-// if (apiProducts.items.length > 0) {
-//   const product1 = apiProducts.items[0];
-//   const product2 = apiProducts.items.length > 1 ? apiProducts.items[1] : product1;
-  
-//   selectedCart.addItem(product1);
-//   console.log('Добавлен товар в корзину:', selectedCart.getItems());
-  
-//   selectedCart.addItem(product2);
-//   console.log('Добавлен второй товар в корзину:', selectedCart.getItems());
-  
-//   // Проверка количества и стоимости
-//   console.log('Количество товаров в корзине:', selectedCart.getItemCount());
-//   console.log('Общая стоимость корзины:', selectedCart.getTotalPrice());
-  
-//   // Проверка наличия товара
-//   console.log(`Есть ли товар с ID "${product1.id}" в корзине:`, selectedCart.hasItem(product1.id));
-  
-//   // Удаление товара
-//   selectedCart.removeItem(product1);
-//   console.log('После удаления товара:', selectedCart.getItems());
-//   console.log('Количество товаров после удаления:', selectedCart.getItemCount());
-//   console.log('Общая стоимость после удаления:', selectedCart.getTotalPrice());
-  
-//   // Очистка корзины
-//   selectedCart.clear();
-//   console.log('После очистки корзины:', selectedCart.getItems());
-// }
-
-// console.log('\n=== Конец тестирования моделей данных ===');

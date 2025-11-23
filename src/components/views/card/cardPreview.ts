@@ -1,4 +1,4 @@
-import { Card } from "../card/card";
+import { Card } from "./card";
 import { IProduct } from "../../../types";
 import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
@@ -7,7 +7,7 @@ import { categoryMap, CDN_URL } from "../../../utils/constants";
 export class CardPreview extends Card {
     protected descriptionElement: HTMLElement;
     protected addToBasketButton: HTMLButtonElement;
-    public id: string = ''; // Сделано public для доступа из main.ts
+    private id: string = ''; // Приватное поле без публичного доступа
     protected imageElement: HTMLImageElement;
     protected categoryElement: HTMLElement;
 
@@ -49,7 +49,7 @@ export class CardPreview extends Card {
         }
     }
 
-    public updateButton(value: boolean) {  // Изменено с protected на public
+    public updateButton(value: boolean) {  // Сделано public для вызова из main.ts (обновление UI без экспозиции полей)
         if (this.priceElement.textContent === 'Бесценно') {
             this.addToBasketButton.textContent = 'Недоступно';
             this.addToBasketButton.disabled = true;
