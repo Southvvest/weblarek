@@ -1,9 +1,9 @@
 import { Component } from "../../base/component";
-import { IProduct } from "../../../types";
+// import { IProduct } from "../../../types";
 import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
-import { cloneTemplate } from "../../../utils/utils";
-import { CardBasket } from "../card/cardBasket";
+// import { cloneTemplate } from "../../../utils/utils";
+// import { CardBasket } from "../card/cardBasket";
 
 type BasketData = {
     items: HTMLElement[];

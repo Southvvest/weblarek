@@ -118,7 +118,7 @@ events.on('basket:add', ({ id }: { id: string }) => {
 
 // Обработчик: открытие корзины
 events.on('basket:open', () => {
-    modal.contentElement = basketContainer; // Используем глобальный экземпляр (рендер в 'basket:changed')
+    modal.contentElement = basketContainer;
     modal.open();
 });
 
@@ -206,7 +206,7 @@ events.on('basket:toggle', ({ id }: { id: string }) => {
         const product = catalog.getProductById(id);
         if (product) {
             basket.addItem(product);
-            modal.close();
+            modal.close(); // Добавлено: закрытие модала после добавления товара
         }
     }
 });
