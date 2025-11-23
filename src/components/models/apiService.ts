@@ -15,7 +15,24 @@ export class ApiService {
         return data.items;
     }
 
+    // Метод для получения товара по ID
+  // Делает GET-запрос на /product/{id} и возвращает товар или null
+  public async getProduct(id: string): Promise<IProduct | null> {
+    try {
+      const data = await this.api.get<IProduct | IApiError>(`/product/${id}`);
+      // Если в ответе есть ошибка (например, NotFound), возвращаем null
+      if ('error' in data) {
+        return null;
+      }
+      return data; // Возвращаем товар
+    } catch {
+      // В случае сетевой ошибки или другой проблемы возвращаем null
+      return null;
+    }
+  }
+
     // Метод для отправки заказа
+    // Делает POST-запрос на /order с данными о покупателе и товарах
     public async postOrder(order: IOrder): Promise<IOrderResponse> {
         const data = await this.api.post<IOrderResponse | IApiError>('/order', order);
         if ('error' in data) {

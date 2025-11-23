@@ -44,7 +44,7 @@ const gallery = new Gallery(galleryElement);
 let orderForm: OrderForm | null = null;
 let contactsForm: ContactsForm | null = null;
 let currentPreview: CardPreview | null = null; // Для обновления кнопки в открытом preview
-let currentPreviewId: string | null = null; // Новая переменная для хранения id текущего preview без прямого доступа к полю
+let currentPreviewId: string | null = null; // Для хранения id текущего preview без прямого доступа к полю
 
 // Функция обновления текущей открытой формы
 function updateCurrentForm(): void {
@@ -138,7 +138,7 @@ events.on('basket:remove', ({ id }: { id: string }) => {
     basket.removeItem(id);
     // header.counter = basket.items.length; // Обновление счетчика
     // if (!(currentPreview && currentPreview.id === id)) { // Исправлено: проверка через currentPreviewId
-    //     modal.close(); // Закрываем только если удаление не из preview (т.е. из basket)
+    //     modal.close();
     // }
 });
 
@@ -211,7 +211,7 @@ events.on('basket:changed', () => {
     basketView.render({ items: basket.items, total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
     if (currentPreview && currentPreviewId) {
         const inBasket = basket.hasItem(currentPreviewId); // Проверка через currentPreviewId вместо геттера
-        currentPreview.updateButton(inBasket); // Теперь работает, так как метод public
+        currentPreview.updateButton(inBasket);
     }
 });
 

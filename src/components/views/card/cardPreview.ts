@@ -49,7 +49,7 @@ export class CardPreview extends Card {
         }
     }
 
-    public updateButton(value: boolean) {  // Сделано public для вызова из main.ts (обновление UI без экспозиции полей)
+    public updateButton(value: boolean) { 
         if (this.priceElement.textContent === 'Бесценно') {
             this.addToBasketButton.textContent = 'Недоступно';
             this.addToBasketButton.disabled = true;
