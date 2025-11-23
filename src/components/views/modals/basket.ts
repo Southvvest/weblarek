@@ -3,7 +3,7 @@ import { IProduct } from "../../../types";
 import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 import { cloneTemplate } from "../../../utils/utils";
-// import { CardBasket } from "../Card/CardBasket";
+import { CardBasket } from "../card/cardBasket";
 
 type BasketData = {
     items: IProduct[];
@@ -41,19 +41,9 @@ export class Basket extends Component<BasketData> {
             this.orderButton.disabled = false;
             this.listElement.innerHTML = ''; // Очистка списка
             data.items.forEach((item, index) => {
-                const cardContainer = cloneTemplate('#card-basket') as HTMLElement;
-                // Заполнение данных вручную без создания компонента
-                const titleElement = ensureElement<HTMLElement>('.card__title', cardContainer);
-                titleElement.textContent = item.title;
-                const priceElement = ensureElement<HTMLElement>('.card__price', cardContainer);
-                priceElement.textContent = item.price !== null ? `${item.price} синапсов` : 'Бесценно'; // Исправлено для null price
-                const indexElement = ensureElement<HTMLElement>('.basket__item-index', cardContainer);
-                indexElement.textContent = (index + 1).toString();
-                // Добавление обработчика удаления
-                const deleteButton = ensureElement<HTMLButtonElement>('.basket__item-delete', cardContainer);
-                deleteButton.addEventListener('click', () => {
-                    this.events.emit('basket:remove', { id: item.id });
-                });
+                const cardContainer = cloneTemplate('#card-basket');
+                const card = new CardBasket(cardContainer, this.events);
+                card.render({ ...item, index: index + 1 });
                 this.listElement.append(cardContainer);
             });
         }
