@@ -2,7 +2,6 @@ import './scss/styles.scss';
 
 import { ApiService } from './components/models/apiService';
 import { Catalog } from './components/models/catalog';
-// import { BasketModel } from './components/models/basketModel';
 import { Buyer } from './components/models/buyer';
 import { API_URL } from './utils/constants';
 import { Api } from './components/base/api';
@@ -51,11 +50,15 @@ let currentPreviewId: string | null = null; // Для хранения id тек
 function updateCurrentForm(): void {
   const data = buyer.getData();
   const errors = buyer.validate();
+  const orderErrors = [errors.payment, errors.address].filter(Boolean).join('; ');
+  const orderValid = !errors.payment && !errors.address;
   if (orderForm) {
-    orderForm.render({ ...data, errors });
+    orderForm.render({ payment: data.payment, address: data.address, errors: orderErrors, valid: orderValid });
   }
+  const contactsErrors = [errors.email, errors.phone].filter(Boolean).join('; ');
+  const contactsValid = !errors.email && !errors.phone;
   if (contactsForm) {
-    contactsForm.render({ ...data, errors });
+    contactsForm.render({ email: data.email, phone: data.phone, errors: contactsErrors, valid: contactsValid });
   }
 }
 
@@ -68,17 +71,6 @@ function renderCatalog(products: IProduct[]): void {
     });
     gallery.catalog = cards;
 }
-
-// Обработчики событий
-// events.on('modal:open', () => { // логика перенесена в места вызова modal.open()
-//     document.body.style.overflow = 'hidden';
-// });
-
-// events.on('modal:close', () => { // логика перенесена в места вызова modal.close()
-//     document.body.style.overflow = '';
-//     currentPreview = null; // Сброс при закрытии модала
-//     currentPreviewId = null; // Сброс id
-// });
 
 // Обработчик: изменение данных покупателя (из форм)
 events.on('buyer:payment', ({ payment }: { payment: TPayment }) => {
@@ -112,7 +104,6 @@ events.on('card:select', ({ id }: { id: string }) => {
         currentPreview = cardPreview; // Сохраняем ссылку для обновления
         currentPreviewId = id; // Сохраняем id для доступа без геттера
         modal.open();
-        document.body.style.overflow = 'hidden'; // Добавлено: логика overflow при открытии
     }
 });
 
@@ -121,39 +112,32 @@ events.on('basket:add', ({ id }: { id: string }) => {
     const product = catalog.getProductById(id);
     if (product) {
         basket.addItem(product);
-        // header.counter = basket.items.length; // Обновление счетчика (общее кол-во уникальных товаров)
-        // modal.close(); // Закрытие модального окна после добавления — удалено, модал остается открытым
+         modal.close();
     }
 });
 
 // Обработчик: открытие корзины
 events.on('basket:open', () => {
-    // const basketContainer = cloneTemplate('#basket');
-    // const basketView = new Basket(basketContainer, events);
-    // basketView.render({ items: basket.items, total: basket.total });
     modal.contentElement = basketContainer; // Используем глобальный экземпляр (рендер в 'basket:changed')
     modal.open();
-    document.body.style.overflow = 'hidden'; // Добавлено: логика overflow при открытии
 });
 
 // Обработчик: удаление товара из корзины
 events.on('basket:remove', ({ id }: { id: string }) => {
     basket.removeItem(id);
-    // header.counter = basket.items.length; // Обновление счетчика
-    // if (!(currentPreview && currentPreview.id === id)) { // Исправлено: проверка через currentPreviewId
-    //     modal.close();
-    // }
 });
 
 // Обработчик: открытие формы заказа (способ оплаты)
 events.on('basket:order', () => {
     const orderContainer = cloneTemplate('#order');
     orderForm = new OrderForm(orderContainer, events);
-    orderForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Render с данными и ошибками через объект
-    modal.contentElement = orderForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Установка через render() компонента (orderContainer уже отрендерен)
+    const data = buyer.getData();
+    const errors = buyer.validate();
+    const orderErrors = [errors.payment, errors.address].filter(Boolean).join('; ');
+    const orderValid = !errors.payment && !errors.address;
+    orderForm.render({ payment: data.payment, address: data.address, errors: orderErrors, valid: orderValid });
+    modal.contentElement = orderContainer;
     modal.open();
-    document.body.style.overflow = 'hidden'; // Добавлено: логика overflow при открытии
-    contactsForm = null;
 });
 
 // Обработчик: переход к форме контактов
@@ -162,16 +146,19 @@ events.on('order:submit', () => {
     const relevantErrors = ['payment', 'address'].filter(key => errors[key as keyof IValidationError]);
     if (relevantErrors.length > 0) {
         if (orderForm) {
-            orderForm.render({ ...buyer.getData(), errors });
+            const orderErrors = relevantErrors.map(key => errors[key]).join('; ');
+            orderForm.render({ ...buyer.getData(), errors: orderErrors, valid: false });
         }
         return;
     }
     const contactsContainer = cloneTemplate('#contacts');
     contactsForm = new ContactsForm(contactsContainer, events);
-    contactsForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Render с данными и ошибками через объект
-    modal.contentElement = contactsForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Установка через render() компонента (contactsContainer уже отрендерен)
+    const data = buyer.getData();
+    const contactsErrors = [errors.email, errors.phone].filter(Boolean).join('; ');
+    const contactsValid = !errors.email && !errors.phone;
+    contactsForm.render({ email: data.email, phone: data.phone, errors: contactsErrors, valid: contactsValid });
+    modal.contentElement = contactsContainer;
     modal.open();
-    document.body.style.overflow = 'hidden';
     orderForm = null;
 });
 
@@ -181,7 +168,8 @@ events.on('contacts:submit', () => {
     const relevantErrors = ['email', 'phone'].filter(key => errors[key as keyof IValidationError]);
     if (relevantErrors.length > 0) {
         if (contactsForm) {
-            contactsForm.render({ ...buyer.getData(), errors });
+            const contactsErrors = relevantErrors.map(key => errors[key]).join('; ');
+            contactsForm.render({ ...buyer.getData(), errors: contactsErrors, valid: false });
         }
         return;
     }
@@ -199,22 +187,18 @@ events.on('contacts:submit', () => {
         orderSuccess.render({ total }); // Передача total для отображения суммы от сервера
         modal.contentElement = successContainer; // Установка через render() компонента (successContainer уже отрендерен)
         modal.open();
-        document.body.style.overflow = 'hidden';
         contactsForm = null;
-    }).catch(error => {
-        console.error('Ошибка при оформлении заказа:', error);
     });
 });
 
 // Обработчик: закрытие окна успеха
 events.on('success:close', () => {
     modal.close();
-    document.body.style.overflow = '';
     currentPreview = null; // Сброс при закрытии модала
     currentPreviewId = null; // Сброс id
 });
 
-// Обработчик: toggle товара в корзине (новый для упрощения логики в представлении)
+// Обработчик: товара в корзине
 events.on('basket:toggle', ({ id }: { id: string }) => {
     if (basket.hasItem(id)) {
         basket.removeItem(id);
@@ -222,6 +206,7 @@ events.on('basket:toggle', ({ id }: { id: string }) => {
         const product = catalog.getProductById(id);
         if (product) {
             basket.addItem(product);
+            modal.close();
         }
     }
 });
@@ -236,6 +221,12 @@ events.on('basket:changed', () => {
             currentPreview.render({ ...product, inBasket: basket.hasItem(currentPreviewId) }); // Re-render preview с обновленным inBasket
         }
     }
+});
+
+// Обработчики событий
+events.on('modal:close', () => {
+    currentPreview = null; // Сброс при закрытии модала
+    currentPreviewId = null; // Сброс id
 });
 
 // Глобальные экземпляры статичных компонентов

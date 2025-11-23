@@ -33,7 +33,7 @@ export class Modal extends Component<unknown> {
 
     close(): void {
         this.container.classList.remove('modal_active');
-        // this.events?.emit('modal:close');
+        this.events?.emit('modal:close');
         this.contentSlot.innerHTML = ''; // Очистка содержимого
     }
 
