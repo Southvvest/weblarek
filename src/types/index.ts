@@ -110,8 +110,20 @@ export interface IBasketData {
     total: number;
 }
 
+// Типы данных для форм (используются в render методах)
+export interface OrderFormData {
+    payment?: TPayment;
+    address?: string;
+    errors?: string;
+    valid: boolean;
+}
 
-
+export interface ContactsFormData {
+    email?: string;
+    phone?: string;
+    errors?: string;
+    valid: boolean;
+}
 
 // events.on('catalog:chanhged', () => {
 //   const itemCard = productsModel.getItems().map((item) => {

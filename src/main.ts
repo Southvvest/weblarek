@@ -8,7 +8,7 @@ import { API_URL } from './utils/constants';
 import { Api } from './components/base/api';
 import { Gallery } from './components/views/gallery';
 import { CardCatalog } from './components/views/card/cardCatalog';
-import { CardBasket } from './components/views/card/cardBasket'; // Добавлен импорт CardBasket
+import { CardBasket } from './components/views/card/cardBasket';
 import { cloneTemplate } from './utils/utils';
 import { IProduct, IOrder, TPayment, IValidationError } from './types';
 import { EventEmitter } from './components/base/events';
@@ -70,15 +70,15 @@ function renderCatalog(products: IProduct[]): void {
 }
 
 // Обработчики событий
-events.on('modal:open', () => {
-    document.body.style.overflow = 'hidden';
-});
+// events.on('modal:open', () => { // логика перенесена в места вызова modal.open()
+//     document.body.style.overflow = 'hidden';
+// });
 
-events.on('modal:close', () => {
-    document.body.style.overflow = '';
-    currentPreview = null; // Сброс при закрытии модала
-    currentPreviewId = null; // Сброс id
-});
+// events.on('modal:close', () => { // логика перенесена в места вызова modal.close()
+//     document.body.style.overflow = '';
+//     currentPreview = null; // Сброс при закрытии модала
+//     currentPreviewId = null; // Сброс id
+// });
 
 // Обработчик: изменение данных покупателя (из форм)
 events.on('buyer:payment', ({ payment }: { payment: TPayment }) => {
@@ -112,6 +112,7 @@ events.on('card:select', ({ id }: { id: string }) => {
         currentPreview = cardPreview; // Сохраняем ссылку для обновления
         currentPreviewId = id; // Сохраняем id для доступа без геттера
         modal.open();
+        document.body.style.overflow = 'hidden'; // Добавлено: логика overflow при открытии
     }
 });
 
@@ -132,6 +133,7 @@ events.on('basket:open', () => {
     // basketView.render({ items: basket.items, total: basket.total });
     modal.contentElement = basketContainer; // Используем глобальный экземпляр (рендер в 'basket:changed')
     modal.open();
+    document.body.style.overflow = 'hidden'; // Добавлено: логика overflow при открытии
 });
 
 // Обработчик: удаление товара из корзины
@@ -150,6 +152,7 @@ events.on('basket:order', () => {
     orderForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Render с данными и ошибками через объект
     modal.contentElement = orderForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Установка через render() компонента (orderContainer уже отрендерен)
     modal.open();
+    document.body.style.overflow = 'hidden'; // Добавлено: логика overflow при открытии
     contactsForm = null;
 });
 
@@ -168,6 +171,7 @@ events.on('order:submit', () => {
     contactsForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Render с данными и ошибками через объект
     modal.contentElement = contactsForm.render({ ...buyer.getData(), errors: buyer.validate() }); // Установка через render() компонента (contactsContainer уже отрендерен)
     modal.open();
+    document.body.style.overflow = 'hidden';
     orderForm = null;
 });
 
@@ -195,6 +199,7 @@ events.on('contacts:submit', () => {
         orderSuccess.render({ total }); // Передача total для отображения суммы от сервера
         modal.contentElement = successContainer; // Установка через render() компонента (successContainer уже отрендерен)
         modal.open();
+        document.body.style.overflow = 'hidden';
         contactsForm = null;
     }).catch(error => {
         console.error('Ошибка при оформлении заказа:', error);
@@ -204,6 +209,9 @@ events.on('contacts:submit', () => {
 // Обработчик: закрытие окна успеха
 events.on('success:close', () => {
     modal.close();
+    document.body.style.overflow = '';
+    currentPreview = null; // Сброс при закрытии модала
+    currentPreviewId = null; // Сброс id
 });
 
 // Обработчик: toggle товара в корзине (новый для упрощения логики в представлении)

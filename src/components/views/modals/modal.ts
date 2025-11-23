@@ -5,9 +5,9 @@ import { ensureElement } from "../../../utils/utils";
 export class Modal extends Component<unknown> {
     protected contentSlot: HTMLElement;
     protected closeButton: HTMLElement;
-    protected events?: IEvents;
+    protected events: IEvents;
 
-    constructor(container: HTMLElement, events?: IEvents) {
+    constructor(container: HTMLElement, events: IEvents) {
         super(container);
         this.events = events;
         this.contentSlot = ensureElement<HTMLElement>('.modal__content', this.container);
@@ -28,12 +28,17 @@ export class Modal extends Component<unknown> {
 
     open(): void {
         this.container.classList.add('modal_active');
-        this.events?.emit('modal:open');
+        // this.events?.emit('modal:open');
     }
 
     close(): void {
         this.container.classList.remove('modal_active');
-        this.events?.emit('modal:close');
+        // this.events?.emit('modal:close');
         this.contentSlot.innerHTML = ''; // Очистка содержимого
+    }
+
+    render(data?: Partial<unknown>): HTMLElement {
+        // super.render(data);
+        return this.container;
     }
 }
