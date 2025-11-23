@@ -28,9 +28,7 @@ export class OrderSuccess extends Component<ISuccessData> {
     }
 
     render(data?: Partial<ISuccessData>): HTMLElement {
-        if (data && data.total !== undefined) {
-            this.total = data.total;
-        }
+        super.render(data);
         return this.container;
     }
 }

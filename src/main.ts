@@ -41,10 +41,23 @@ const galleryElement = ensureElement('.gallery');
 const gallery = new Gallery(galleryElement);
 
 // Ссылки на текущие формы для обновления
-let orderForm: OrderForm | null = null;
-let contactsForm: ContactsForm | null = null;
 let currentPreview: CardPreview | null = null; // Для обновления кнопки в открытом preview
 let currentPreviewId: string | null = null; // Для хранения id текущего preview без прямого доступа к полю
+
+// Глобальные экземпляры статичных компонентов
+// Статичные компоненты — это все, кроме карточек товаров для каталога (CardCatalog) и корзины (CardBasket), т.е. тех, которые создаются в большом количестве одновременно.
+const basketContainer = cloneTemplate('#basket');
+const basketView = new Basket(basketContainer, events); // Создание экземпляра один раз
+basketView.render({ items: basket.items.map((item, index) => { const cardContainer = cloneTemplate('#card-basket'); const card = new CardBasket(cardContainer, events); card.render({ ...item, index: index + 1 }); return cardContainer; }), total: basket.total }); // Начальный рендер (пустая корзина)
+
+const orderContainer = cloneTemplate('#order');
+const orderForm = new OrderForm(orderContainer, events);
+
+const contactsContainer = cloneTemplate('#contacts');
+const contactsForm = new ContactsForm(contactsContainer, events);
+
+const successContainer = cloneTemplate('#success');
+const orderSuccess = new OrderSuccess(successContainer, events);
 
 // Функция обновления текущей открытой формы
 function updateCurrentForm(): void {
@@ -52,14 +65,10 @@ function updateCurrentForm(): void {
   const errors = buyer.validate();
   const orderErrors = [errors.payment, errors.address].filter(Boolean).join('; ');
   const orderValid = !errors.payment && !errors.address;
-  if (orderForm) {
-    orderForm.render({ payment: data.payment, address: data.address, errors: orderErrors, valid: orderValid });
-  }
+  orderForm.render({ payment: data.payment, address: data.address, errors: orderErrors, valid: orderValid });
   const contactsErrors = [errors.email, errors.phone].filter(Boolean).join('; ');
   const contactsValid = !errors.email && !errors.phone;
-  if (contactsForm) {
-    contactsForm.render({ email: data.email, phone: data.phone, errors: contactsErrors, valid: contactsValid });
-  }
+  contactsForm.render({ email: data.email, phone: data.phone, errors: contactsErrors, valid: contactsValid });
 }
 
 // Презентер: логика после загрузки товаров
@@ -129,8 +138,6 @@ events.on('basket:remove', ({ id }: { id: string }) => {
 
 // Обработчик: открытие формы заказа (способ оплаты)
 events.on('basket:order', () => {
-    const orderContainer = cloneTemplate('#order');
-    orderForm = new OrderForm(orderContainer, events);
     const data = buyer.getData();
     const errors = buyer.validate();
     const orderErrors = [errors.payment, errors.address].filter(Boolean).join('; ');
@@ -145,21 +152,16 @@ events.on('order:submit', () => {
     const errors = buyer.validate();
     const relevantErrors = ['payment', 'address'].filter(key => errors[key as keyof IValidationError]);
     if (relevantErrors.length > 0) {
-        if (orderForm) {
-            const orderErrors = relevantErrors.map(key => errors[key]).join('; ');
-            orderForm.render({ ...buyer.getData(), errors: orderErrors, valid: false });
-        }
+        const orderErrors = relevantErrors.map(key => errors[key as keyof IValidationError]).filter(Boolean).join('; ');
+        orderForm.render({ ...buyer.getData(), errors: orderErrors, valid: false });
         return;
     }
-    const contactsContainer = cloneTemplate('#contacts');
-    contactsForm = new ContactsForm(contactsContainer, events);
     const data = buyer.getData();
     const contactsErrors = [errors.email, errors.phone].filter(Boolean).join('; ');
     const contactsValid = !errors.email && !errors.phone;
     contactsForm.render({ email: data.email, phone: data.phone, errors: contactsErrors, valid: contactsValid });
     modal.contentElement = contactsContainer;
     modal.open();
-    orderForm = null;
 });
 
 // Обработчик: отправка заказа
@@ -167,10 +169,8 @@ events.on('contacts:submit', () => {
     const errors = buyer.validate();
     const relevantErrors = ['email', 'phone'].filter(key => errors[key as keyof IValidationError]);
     if (relevantErrors.length > 0) {
-        if (contactsForm) {
-            const contactsErrors = relevantErrors.map(key => errors[key]).join('; ');
-            contactsForm.render({ ...buyer.getData(), errors: contactsErrors, valid: false });
-        }
+        const contactsErrors = relevantErrors.map(key => errors[key as keyof IValidationError]).filter(Boolean).join('; ');
+        contactsForm.render({ ...buyer.getData(), errors: contactsErrors, valid: false });
         return;
     }
     const orderData: IOrder = {
@@ -182,12 +182,9 @@ events.on('contacts:submit', () => {
         const total = response.total; // Используем total из ответа сервера для отображения
         basket.clear();
         header.counter = 0;
-        const successContainer = cloneTemplate('#success');
-        const orderSuccess = new OrderSuccess(successContainer, events);
         orderSuccess.render({ total }); // Передача total для отображения суммы от сервера
         modal.contentElement = successContainer; // Установка через render() компонента (successContainer уже отрендерен)
         modal.open();
-        contactsForm = null;
     });
 });
 
@@ -228,11 +225,6 @@ events.on('modal:close', () => {
     currentPreview = null; // Сброс при закрытии модала
     currentPreviewId = null; // Сброс id
 });
-
-// Глобальные экземпляры статичных компонентов
-const basketContainer = cloneTemplate('#basket');
-const basketView = new Basket(basketContainer, events); // Создание экземпляра один раз
-basketView.render({ items: basket.items.map((item, index) => { const cardContainer = cloneTemplate('#card-basket'); const card = new CardBasket(cardContainer, events); card.render({ ...item, index: index + 1 }); return cardContainer; }), total: basket.total }); // Начальный рендер (пустая корзина)
 
 // Выполнение запроса на получение товаров
 apiService.getProducts()
