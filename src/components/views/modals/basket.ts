@@ -6,7 +6,7 @@ import { cloneTemplate } from "../../../utils/utils";
 import { CardBasket } from "../card/cardBasket";
 
 type BasketData = {
-    items: IProduct[];
+    items: HTMLElement[];
     total: number;
 };
 
@@ -39,13 +39,7 @@ export class Basket extends Component<BasketData> {
             this.orderButton.disabled = true;
         } else {
             this.orderButton.disabled = false;
-            this.listElement.innerHTML = ''; // Очистка списка
-            data.items.forEach((item, index) => {
-                const cardContainer = cloneTemplate('#card-basket');
-                const card = new CardBasket(cardContainer, this.events);
-                card.render({ ...item, index: index + 1 });
-                this.listElement.append(cardContainer);
-            });
+            this.listElement.replaceChildren(...data.items);
         }
         this.total = data.total;
         return this.container;

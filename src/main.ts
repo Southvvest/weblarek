@@ -8,6 +8,7 @@ import { API_URL } from './utils/constants';
 import { Api } from './components/base/api';
 import { Gallery } from './components/views/gallery';
 import { CardCatalog } from './components/views/card/cardCatalog';
+import { CardBasket } from './components/views/card/cardBasket'; // Добавлен импорт CardBasket
 import { cloneTemplate } from './utils/utils';
 import { IProduct, IOrder, TPayment, IValidationError } from './types';
 import { EventEmitter } from './components/base/events';
@@ -220,7 +221,7 @@ events.on('basket:toggle', ({ id }: { id: string }) => {
 // Обработчик изменения корзины для обновления счетчика и рендера
 events.on('basket:changed', () => {
     header.counter = basket.items.length; // Обновление счетчика в обработчике события изменения модели (используем метод модели)
-    basketView.render({ items: basket.items, total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
+    basketView.render({ items: basket.items.map((item, index) => { const cardContainer = cloneTemplate('#card-basket'); const card = new CardBasket(cardContainer, events); card.render({ ...item, index: index + 1 }); return cardContainer; }), total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
     if (currentPreview && currentPreviewId) {
         const product = catalog.getProductById(currentPreviewId);
         if (product) {
@@ -232,7 +233,7 @@ events.on('basket:changed', () => {
 // Глобальные экземпляры статичных компонентов
 const basketContainer = cloneTemplate('#basket');
 const basketView = new Basket(basketContainer, events); // Создание экземпляра один раз
-basketView.render({ items: basket.items, total: basket.total }); // Начальный рендер (пустая корзина)
+basketView.render({ items: basket.items.map((item, index) => { const cardContainer = cloneTemplate('#card-basket'); const card = new CardBasket(cardContainer, events); card.render({ ...item, index: index + 1 }); return cardContainer; }), total: basket.total }); // Начальный рендер (пустая корзина)
 
 // Выполнение запроса на получение товаров
 apiService.getProducts()
@@ -241,13 +242,8 @@ apiService.getProducts()
     catalog.setProducts(products);
     // Вывод сохранённого каталога в консоль для проверки
     console.log('Каталог товаров:', catalog.getProducts());
-    // renderCatalog(products);
+    renderCatalog(products); // Вызов рендера каталога после загрузки товаров
   })
   .catch(error => {
     console.error('Ошибка при получении товаров:', error);
   });
-
-// Обработчик изменения каталога
-events.on('catalog:updated', (products: IProduct[]) => {
-    renderCatalog(products); // Рендер каталога после события от модели
-});
