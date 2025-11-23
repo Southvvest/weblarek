@@ -41,22 +41,3 @@ export class ApiService {
         return data;
     }
 }
-
- 
- 
-//   public async postOrder(order: {
-//     payment: TPayment;
-//     address: string;
-//     email: string;
-//     phone: string;
-//     items: string[]; // Массив ID товаров
-//     total: number;
-//   }): Promise<{ id: string; total: number }> {
-//     const data = await this.api.post<{ id: string; total: number } | { error: string }>('/order', order);
-//     // Если в ответе есть ошибка (например, товар не найден, неверная сумма или отсутствие адреса), выбрасываем ошибку
-//     if ('error' in data) {
-//       throw new Error(data.error);
-//     }
-//     return data; // Возвращаем успешный результат
-//   }
-// }

@@ -2,7 +2,6 @@ import { Component } from "../../base/component";
 import { IProduct } from "../../../types";
 import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
-// import { API_URL } from "../../../utils/constants";
 
 export class CardBasket extends Component<IProduct & { index: number }> {
     protected indexElement: HTMLElement;

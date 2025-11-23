@@ -52,20 +52,6 @@ export class CardPreview extends Card {
         }
     }
 
-    // public updateButton(value: boolean) {
-    //     Логика теперь в сеттерах, вызываемых через render()
-    //     if (this.priceElement.textContent === 'Бесценно') {
-    //         this.addToBasketButton.textContent = 'Недоступно';
-    //         this.addToBasketButton.disabled = true;
-    //     } else if (value) {
-    //         this.addToBasketButton.textContent = 'Удалить';
-    //         this.addToBasketButton.disabled = false;
-    //     } else {
-    //         this.addToBasketButton.textContent = 'В корзину';
-    //         this.addToBasketButton.disabled = false;
-    //     }
-    // }
-
     render(data: IProduct & { inBasket?: boolean }): HTMLElement {
         const { inBasket = false, ...product } = data;
         super.render(product);

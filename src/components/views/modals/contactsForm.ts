@@ -1,5 +1,3 @@
-// import { Component } from "../../base/component";
-// import { IBuyer, IValidationError } from "../../../types";
 import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 import { Form } from "./form";

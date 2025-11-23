@@ -1,4 +1,3 @@
-// import { Component } from "../../base/component";
 import { TPayment} from "../../../types";
 import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";

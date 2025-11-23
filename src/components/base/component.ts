@@ -23,9 +23,4 @@ export abstract class Component<T> {
         Object.assign(this as object, data ?? {});
         return this.container;
     }
-
-    // // Публичный геттер для доступа к container без нарушения инкапсуляции
-    // public getContainer(): HTMLElement {
-    //     return this.container;
-    // }
 }

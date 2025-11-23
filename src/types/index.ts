@@ -1,6 +1,3 @@
-// import { CardCatalog } from "../components/views/Card/CardCatalog";
-// import { cloneTemplate } from "../utils/utils";
-
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
 export interface IApi {
@@ -124,20 +121,3 @@ export interface ContactsFormData {
     errors?: string;
     valid: boolean;
 }
-
-// events.on('catalog:chanhged', () => {
-//   const itemCard = productsModel.getItems().map((item) => {
-//     const card = new CardCatalog(cloneTemplate(CardCatalogTemplate),{
-//       onClick: () => EventSource.emit('card:select', item),
-//     });
-//     return card.render(item);    
-//   });
-//   gallery.render({catalog: itemsCard});
-// });
-
-//   lekerApi
-//   .getProductList()
-//   .then((data) => {
-//     productsModel.setItems(data.items);
-//   })
-//   .catch((err) => console.error(err));
