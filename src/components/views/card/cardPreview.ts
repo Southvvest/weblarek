@@ -7,7 +7,7 @@ import { categoryMap, CDN_URL } from "../../../utils/constants";
 export class CardPreview extends Card {
     protected descriptionElement: HTMLElement;
     protected addToBasketButton: HTMLButtonElement;
-    private id: string = ''; // Приватное поле без публичного доступа
+    protected id: string = '';
     protected imageElement: HTMLImageElement;
     protected categoryElement: HTMLElement;
 
@@ -49,7 +49,7 @@ export class CardPreview extends Card {
         }
     }
 
-    public updateButton(value: boolean) { 
+    public updateButton(value: boolean) {
         if (this.priceElement.textContent === 'Бесценно') {
             this.addToBasketButton.textContent = 'Недоступно';
             this.addToBasketButton.disabled = true;

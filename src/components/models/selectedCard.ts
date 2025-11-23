@@ -1,34 +1,40 @@
 import { IProduct } from "../../types";
+import { IEvents } from '../base/events';
 
 export class SelectedCart {
-  private items: IProduct[] = [];
+  private _items: IProduct[] = [];
 
-  // Конструктор без параметров
-  constructor() {}
+  // Конструктор с events
+  constructor(private events: IEvents) {}
 
   // Получение всех товаров в корзине
   public getItems(): IProduct[] {
-    return this.items;
+    return this._items;
   }
 
   // Добавление товара в корзину
   public addItem(product: IProduct): void {
-    this.items.push(product);
+    if (product.price !== null && !this.hasItem(product.id)) { // Добавлена проверка на price и отсутствие дубликатов
+      this._items.push(product);
+      this.events.emit('basket:changed'); // Добавлен эмит события
+    }
   }
 
-  // Удаление товара из корзины по объекту
-  public removeItem(product: IProduct): void {
-    this.items = this.items.filter(item => item.id !== product.id);
+  // Удаление товара из корзины по id
+  public removeItem(id: string): void {
+    this._items = this._items.filter(item => item.id !== id);
+    this.events.emit('basket:changed'); // Добавлен эмит события
   }
 
   // Очистка корзины
   public clear(): void {
-    this.items = [];
+    this._items = [];
+    this.events.emit('basket:changed'); // Добавлен эмит события
   }
 
   // Расчет общей стоимости товаров
   public getTotalPrice(): number {
-    return this.items.reduce((total, item) => {
+    return this._items.reduce((total, item) => {
       if (item.price !== null) {
         return total + item.price;
       }
@@ -38,11 +44,20 @@ export class SelectedCart {
 
   // Количество товаров в корзине
   public getItemCount(): number {
-    return this.items.length;
+    return this._items.length;
   }
 
   // Проверка, есть ли товар с определенным id в корзине
   public hasItem(id: string): boolean {
-    return this.items.some(item => item.id === id);
+    return this._items.some(item => item.id === id);
+  }
+
+  // Геттеры для совместимости с IBasket
+  public get items(): IProduct[] {
+    return this._items;
+  }
+
+  public get total(): number {
+    return this.getTotalPrice();
   }
 }

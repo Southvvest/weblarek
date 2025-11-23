@@ -2,7 +2,7 @@ import './scss/styles.scss';
 
 import { ApiService } from './components/models/apiService';
 import { Catalog } from './components/models/catalog';
-import { BasketModel } from './components/models/basketModel';
+// import { BasketModel } from './components/models/basketModel';
 import { Buyer } from './components/models/buyer';
 import { API_URL } from './utils/constants';
 import { Api } from './components/base/api';
@@ -29,7 +29,7 @@ const modal = new Modal(ensureElement('#modal-container'), events);
 const api = new Api(API_URL);
 const apiService = new ApiService(api); // Теперь принимает IApi
 const catalog = new Catalog(events); // Добавлен events
-const basket = new BasketModel(events); // Добавлен events
+const basket = new SelectedCart(events);
 const buyer = new Buyer(events); // Добавлен events
 // Передача HTMLElement
 const headerElement = ensureElement('.header');
