@@ -1,17 +1,17 @@
 import { TPayment} from "../../../types";
 import { IEvents } from "../../base/events";
-import { ensureElement } from "../../../utils/utils";
+import { ensureElement, ensureAllElements } from "../../../utils/utils";
 import { Form } from "./form";
 import { OrderFormData } from "../../../types";
 
 export class OrderForm extends Form<OrderFormData> {
-    protected paymentButtons: NodeListOf<HTMLButtonElement>;
+    protected paymentButtons: HTMLButtonElement[];
     protected addressInput: HTMLInputElement;
 
     constructor(container: HTMLElement, events: IEvents) {
         super(container, events, 'order:submit');
 
-        this.paymentButtons = this.container.querySelectorAll('.button_alt');
+        this.paymentButtons = ensureAllElements<HTMLButtonElement>('.button_alt', this.container);
         this.addressInput = ensureElement<HTMLInputElement>('input[name="address"]', this.container);
 
         this.paymentButtons.forEach(button => {
@@ -21,7 +21,7 @@ export class OrderForm extends Form<OrderFormData> {
             });
         });
 
-        this.addressInput.addEventListener('input', () => {
+        this.addressInput.addEventListener('blur', () => {
             const address = this.addressInput.value;
             this.events.emit('buyer:address', { address });
         });
@@ -30,7 +30,7 @@ export class OrderForm extends Form<OrderFormData> {
     set payment(value: TPayment) {
         this.paymentButtons.forEach(button => button.classList.remove('button_alt-active'));
         if (value) {
-            const activeButton = Array.from(this.paymentButtons).find(button => button.name === value);
+            const activeButton = this.paymentButtons.find(button => button.name === value);
             if (activeButton) {
                 activeButton.classList.add('button_alt-active');
             }

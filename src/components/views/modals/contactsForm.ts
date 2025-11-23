@@ -13,12 +13,12 @@ export class ContactsForm extends Form<ContactsFormData> {
         this.emailInput = ensureElement<HTMLInputElement>('input[name="email"]', this.container);
         this.phoneInput = ensureElement<HTMLInputElement>('input[name="phone"]', this.container);
 
-        this.emailInput.addEventListener('input', () => {
+        this.emailInput.addEventListener('blur', () => {
             const email = this.emailInput.value;
             this.events.emit('buyer:email', { email });
         });
 
-        this.phoneInput.addEventListener('input', () => {
+        this.phoneInput.addEventListener('blur', () => {
             const phone = this.phoneInput.value;
             this.events.emit('buyer:phone', { phone });
         });

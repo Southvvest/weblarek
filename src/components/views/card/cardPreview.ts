@@ -3,22 +3,33 @@ import { IProduct } from "../../../types";
 import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 import { categoryMap, CDN_URL } from "../../../utils/constants";
+import { SelectedCart } from "../../models/selectedCard";
 
 export class CardPreview extends Card {
     protected descriptionElement: HTMLElement;
     protected addToBasketButton: HTMLButtonElement;
     protected imageElement: HTMLImageElement;
     protected categoryElement: HTMLElement;
+    protected basket: SelectedCart;
+    protected product!: IProduct;
 
-    constructor(container: HTMLElement, events?: IEvents) {
+    constructor(container: HTMLElement, events?: IEvents, basket?: SelectedCart) {
         super(container, events);
 
         this.descriptionElement = ensureElement<HTMLElement>('.card__text', this.container);
         this.addToBasketButton = ensureElement<HTMLButtonElement>('.card__button', this.container);
         this.imageElement = ensureElement<HTMLImageElement>('.card__image', this.container);
         this.categoryElement = ensureElement<HTMLElement>('.card__category', this.container);
+        this.basket = basket!;
 
         this.addToBasketButton.addEventListener('click', this.handleButtonClick.bind(this));
+        this.events!.on('basket:changed', () => {
+            this.render({ ...this.product, inBasket: this.basket.hasItem(this.product.id) });
+        });
+    }
+
+    public getProduct(): IProduct {
+        return this.product;
     }
 
     set description(value: string) {
@@ -54,6 +65,7 @@ export class CardPreview extends Card {
 
     render(data: IProduct & { inBasket?: boolean }): HTMLElement {
         const { inBasket = false, ...product } = data;
+        this.product = product;
         super.render(product);
         this.container.dataset.id = product.id;
         // Логика кнопки через сеттеры, вызываемые Object.assign в super.render
