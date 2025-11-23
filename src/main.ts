@@ -106,7 +106,7 @@ events.on('card:select', ({ id }: { id: string }) => {
     if (product) {
         const previewContainer = cloneTemplate('#card-preview');
         const cardPreview = new CardPreview(previewContainer, events);
-        cardPreview.render(product, basket.hasItem(id)); // Передаем статус inBasket
+        cardPreview.render({ ...product, inBasket: basket.hasItem(id) }); // Передаем статус inBasket в объекте
         modal.contentElement = previewContainer;
         currentPreview = cardPreview; // Сохраняем ссылку для обновления
         currentPreviewId = id; // Сохраняем id для доступа без геттера
@@ -205,13 +205,27 @@ events.on('success:close', () => {
     modal.close();
 });
 
+// Обработчик: toggle товара в корзине (новый для упрощения логики в представлении)
+events.on('basket:toggle', ({ id }: { id: string }) => {
+    if (basket.hasItem(id)) {
+        basket.removeItem(id);
+    } else {
+        const product = catalog.getProductById(id);
+        if (product) {
+            basket.addItem(product);
+        }
+    }
+});
+
 // Обработчик изменения корзины для обновления счетчика и рендера
 events.on('basket:changed', () => {
     header.counter = basket.items.length; // Обновление счетчика в обработчике события изменения модели (используем метод модели)
     basketView.render({ items: basket.items, total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
     if (currentPreview && currentPreviewId) {
-        const inBasket = basket.hasItem(currentPreviewId); // Проверка через currentPreviewId вместо геттера
-        currentPreview.updateButton(inBasket);
+        const product = catalog.getProductById(currentPreviewId);
+        if (product) {
+            currentPreview.render({ ...product, inBasket: basket.hasItem(currentPreviewId) }); // Re-render preview с обновленным inBasket
+        }
     }
 });
 

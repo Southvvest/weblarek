@@ -1,11 +1,10 @@
-import { Card } from "../card/card";
+import { Card } from "./card";
 import { IProduct } from "../../../types";
 import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 import { categoryMap, CDN_URL } from "../../../utils/constants";
 
 export class CardCatalog extends Card {
-    protected id: string = '';
     protected categoryElement: HTMLElement;
     protected imageElement: HTMLImageElement;
 
@@ -17,7 +16,7 @@ export class CardCatalog extends Card {
 
         // Клик-обработчик только в этом классе
         this.container.addEventListener('click', () => {
-            const id = this.id;
+            const id = this.container.dataset.id;
             if (id) {
                 this.events!.emit('card:select', { id });
             }
@@ -39,10 +38,8 @@ export class CardCatalog extends Card {
     }
 
     render(product: IProduct): HTMLElement {
-        this.id = product.id;
         super.render(product);
-        this.image = product.image;
-        this.category = product.category;
+        this.container.dataset.id = product.id;
         return this.container;
     }
 }

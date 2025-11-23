@@ -7,7 +7,6 @@ import { categoryMap, CDN_URL } from "../../../utils/constants";
 export class CardPreview extends Card {
     protected descriptionElement: HTMLElement;
     protected addToBasketButton: HTMLButtonElement;
-    protected id: string = '';
     protected imageElement: HTMLImageElement;
     protected categoryElement: HTMLElement;
 
@@ -38,37 +37,50 @@ export class CardPreview extends Card {
         }
     }
 
+    set buttonText(value: string) {
+        this.addToBasketButton.textContent = value;
+    }
+
+    set buttonDisabled(value: boolean) {
+        this.addToBasketButton.disabled = value;
+    }
+
     protected handleButtonClick() {
-        if (this.addToBasketButton.disabled) return;
-        if (this.priceElement.textContent === 'Бесценно') return;
-        const isInBasket = this.addToBasketButton.textContent === 'Удалить';
-        if (isInBasket) {
-            this.events!.emit('basket:remove', { id: this.id });
-        } else {
-            this.events!.emit('basket:add', { id: this.id });
+        const id = this.container.dataset.id;
+        if (id) {
+            this.events!.emit('basket:toggle', { id }); // Эмит toggle без внутренней логики
         }
     }
 
-    public updateButton(value: boolean) {
-        if (this.priceElement.textContent === 'Бесценно') {
-            this.addToBasketButton.textContent = 'Недоступно';
-            this.addToBasketButton.disabled = true;
-        } else if (value) {
-            this.addToBasketButton.textContent = 'Удалить';
-            this.addToBasketButton.disabled = false;
-        } else {
-            this.addToBasketButton.textContent = 'В корзину';
-            this.addToBasketButton.disabled = false;
-        }
-    }
+    // public updateButton(value: boolean) {
+    //     Логика теперь в сеттерах, вызываемых через render()
+    //     if (this.priceElement.textContent === 'Бесценно') {
+    //         this.addToBasketButton.textContent = 'Недоступно';
+    //         this.addToBasketButton.disabled = true;
+    //     } else if (value) {
+    //         this.addToBasketButton.textContent = 'Удалить';
+    //         this.addToBasketButton.disabled = false;
+    //     } else {
+    //         this.addToBasketButton.textContent = 'В корзину';
+    //         this.addToBasketButton.disabled = false;
+    //     }
+    // }
 
-    render(product: IProduct, inBasket: boolean = false): HTMLElement {
-        this.id = product.id;
+    render(data: IProduct & { inBasket?: boolean }): HTMLElement {
+        const { inBasket = false, ...product } = data;
         super.render(product);
-        this.description = product.description;
-        this.image = product.image;
-        this.category = product.category;
-        this.updateButton(inBasket);
+        this.container.dataset.id = product.id;
+        // Логика кнопки через сеттеры, вызываемые Object.assign в super.render
+        if (product.price === null) {
+            this.buttonText = 'Недоступно';
+            this.buttonDisabled = true;
+        } else if (inBasket) {
+            this.buttonText = 'Удалить';
+            this.buttonDisabled = false;
+        } else {
+            this.buttonText = 'В корзину';
+            this.buttonDisabled = false;
+        }
         return this.container;
     }
 }
