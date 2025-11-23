@@ -40,36 +40,10 @@ header.counter = 0; // Начальный счетчик
 const galleryElement = ensureElement('.gallery');
 const gallery = new Gallery(galleryElement);
 
-// Ссылки на текущие формы для обновления
-let currentPreview: CardPreview | null = null; // Для обновления кнопки в открытом preview
-let currentPreviewId: string | null = null; // Для хранения id текущего preview без прямого доступа к полю
-
 // Глобальные экземпляры статичных компонентов
 // Статичные компоненты — это все, кроме карточек товаров для каталога (CardCatalog) и корзины (CardBasket), т.е. тех, которые создаются в большом количестве одновременно.
 const basketContainer = cloneTemplate('#basket');
 const basketView = new Basket(basketContainer, events); // Создание экземпляра один раз
-basketView.render({ items: basket.items.map((item, index) => { const cardContainer = cloneTemplate('#card-basket'); const card = new CardBasket(cardContainer, events); card.render({ ...item, index: index + 1 }); return cardContainer; }), total: basket.total }); // Начальный рендер (пустая корзина)
-
-const orderContainer = cloneTemplate('#order');
-const orderForm = new OrderForm(orderContainer, events);
-
-const contactsContainer = cloneTemplate('#contacts');
-const contactsForm = new ContactsForm(contactsContainer, events);
-
-const successContainer = cloneTemplate('#success');
-const orderSuccess = new OrderSuccess(successContainer, events);
-
-// Функция обновления текущей открытой формы
-function updateCurrentForm(): void {
-  const data = buyer.getData();
-  const errors = buyer.validate();
-  const orderErrors = [errors.payment, errors.address].filter(Boolean).join('; ');
-  const orderValid = !errors.payment && !errors.address;
-  orderForm.render({ payment: data.payment, address: data.address, errors: orderErrors, valid: orderValid });
-  const contactsErrors = [errors.email, errors.phone].filter(Boolean).join('; ');
-  const contactsValid = !errors.email && !errors.phone;
-  contactsForm.render({ email: data.email, phone: data.phone, errors: contactsErrors, valid: contactsValid });
-}
 
 // Презентер: логика после загрузки товаров
 function renderCatalog(products: IProduct[]): void {
@@ -99,7 +73,12 @@ events.on('buyer:phone', ({ phone }: { phone: string }) => {
 });
 
 events.on('buyer:changed', () => {
-    updateCurrentForm();
+    header.counter = basket.items.length; // Обновление счетчика в обработчике события изменения модели (используем метод модели)
+    basketView.render({ items: basket.items.map((item, index) => { 
+        const cardContainer = cloneTemplate('#card-basket'); 
+        const card = new CardBasket(cardContainer, events); 
+        card.render({ ...item, index: index + 1 }); return cardContainer; }), 
+        total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
 });
 
 // Обработчик: открытие модального окна с CardPreview при выборе товара (по id)
@@ -108,10 +87,7 @@ events.on('card:select', ({ id }: { id: string }) => {
     if (product) {
         const previewContainer = cloneTemplate('#card-preview');
         const cardPreview = new CardPreview(previewContainer, events);
-        cardPreview.render({ ...product, inBasket: basket.hasItem(id) }); // Передаем статус inBasket в объекте
-        modal.contentElement = previewContainer;
-        currentPreview = cardPreview; // Сохраняем ссылку для обновления
-        currentPreviewId = id; // Сохраняем id для доступа без геттера
+        modal.contentElement = cardPreview.render({ ...product, inBasket: basket.hasItem(id) }); // Исправлено: разметка получается из компонента через render
         modal.open();
     }
 });
@@ -127,7 +103,11 @@ events.on('basket:add', ({ id }: { id: string }) => {
 
 // Обработчик: открытие корзины
 events.on('basket:open', () => {
-    modal.contentElement = basketContainer;
+    modal.contentElement = basketView.render({ items: basket.items.map((item, index) => { 
+        const cardContainer = cloneTemplate('#card-basket'); 
+        const card = new CardBasket(cardContainer, events); 
+        card.render({ ...item, index: index + 1 }); 
+        return cardContainer; }), total: basket.total }); // Исправлено: разметка получается из компонента через render
     modal.open();
 });
 
@@ -142,8 +122,9 @@ events.on('basket:order', () => {
     const errors = buyer.validate();
     const orderErrors = [errors.payment, errors.address].filter(Boolean).join('; ');
     const orderValid = !errors.payment && !errors.address;
-    orderForm.render({ payment: data.payment, address: data.address, errors: orderErrors, valid: orderValid });
-    modal.contentElement = orderContainer;
+    const orderContainer = cloneTemplate('#order');
+    const orderForm = new OrderForm(orderContainer, events);
+    modal.contentElement = orderForm.render({ payment: data.payment, address: data.address, errors: orderErrors, valid: orderValid }); // Исправлено: разметка получается из компонента через render, локальное создание
     modal.open();
 });
 
@@ -153,14 +134,17 @@ events.on('order:submit', () => {
     const relevantErrors = ['payment', 'address'].filter(key => errors[key as keyof IValidationError]);
     if (relevantErrors.length > 0) {
         const orderErrors = relevantErrors.map(key => errors[key as keyof IValidationError]).filter(Boolean).join('; ');
-        orderForm.render({ ...buyer.getData(), errors: orderErrors, valid: false });
+        const orderContainer = cloneTemplate('#order');
+        const orderForm = new OrderForm(orderContainer, events);
+        modal.contentElement = orderForm.render({ ...buyer.getData(), errors: orderErrors, valid: false }); // Рендер с ошибками для текущей формы
         return;
     }
     const data = buyer.getData();
     const contactsErrors = [errors.email, errors.phone].filter(Boolean).join('; ');
     const contactsValid = !errors.email && !errors.phone;
-    contactsForm.render({ email: data.email, phone: data.phone, errors: contactsErrors, valid: contactsValid });
-    modal.contentElement = contactsContainer;
+    const contactsContainer = cloneTemplate('#contacts');
+    const contactsForm = new ContactsForm(contactsContainer, events);
+    modal.contentElement = contactsForm.render({ email: data.email, phone: data.phone, errors: contactsErrors, valid: contactsValid }); // Исправлено: разметка получается из компонента через render, локальное создание
     modal.open();
 });
 
@@ -170,7 +154,9 @@ events.on('contacts:submit', () => {
     const relevantErrors = ['email', 'phone'].filter(key => errors[key as keyof IValidationError]);
     if (relevantErrors.length > 0) {
         const contactsErrors = relevantErrors.map(key => errors[key as keyof IValidationError]).filter(Boolean).join('; ');
-        contactsForm.render({ ...buyer.getData(), errors: contactsErrors, valid: false });
+        const contactsContainer = cloneTemplate('#contacts');
+        const contactsForm = new ContactsForm(contactsContainer, events);
+        modal.contentElement = contactsForm.render({ ...buyer.getData(), errors: contactsErrors, valid: false }); // Рендер с ошибками для текущей формы
         return;
     }
     const orderData: IOrder = {
@@ -182,8 +168,9 @@ events.on('contacts:submit', () => {
         const total = response.total; // Используем total из ответа сервера для отображения
         basket.clear();
         header.counter = 0;
-        orderSuccess.render({ total }); // Передача total для отображения суммы от сервера
-        modal.contentElement = successContainer; // Установка через render() компонента (successContainer уже отрендерен)
+        const successContainer = cloneTemplate('#success');
+        const orderSuccess = new OrderSuccess(successContainer, events);
+        modal.contentElement = orderSuccess.render({ total }); // Исправлено: разметка получается из компонента через render, локальное создание
         modal.open();
     });
 });
@@ -191,8 +178,6 @@ events.on('contacts:submit', () => {
 // Обработчик: закрытие окна успеха
 events.on('success:close', () => {
     modal.close();
-    currentPreview = null; // Сброс при закрытии модала
-    currentPreviewId = null; // Сброс id
 });
 
 // Обработчик: товара в корзине
@@ -208,22 +193,8 @@ events.on('basket:toggle', ({ id }: { id: string }) => {
     }
 });
 
-// Обработчик изменения корзины для обновления счетчика и рендера
-events.on('basket:changed', () => {
-    header.counter = basket.items.length; // Обновление счетчика в обработчике события изменения модели (используем метод модели)
-    basketView.render({ items: basket.items.map((item, index) => { const cardContainer = cloneTemplate('#card-basket'); const card = new CardBasket(cardContainer, events); card.render({ ...item, index: index + 1 }); return cardContainer; }), total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
-    if (currentPreview && currentPreviewId) {
-        const product = catalog.getProductById(currentPreviewId);
-        if (product) {
-            currentPreview.render({ ...product, inBasket: basket.hasItem(currentPreviewId) }); // Re-render preview с обновленным inBasket
-        }
-    }
-});
-
 // Обработчики событий
 events.on('modal:close', () => {
-    currentPreview = null; // Сброс при закрытии модала
-    currentPreviewId = null; // Сброс id
 });
 
 // Выполнение запроса на получение товаров
