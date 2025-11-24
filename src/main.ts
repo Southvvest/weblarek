@@ -55,8 +55,12 @@ let currentContactsForm: ContactsForm | null = null;
 function renderCatalog(products: IProduct[]): void {
     const cards: HTMLElement[] = products.map((product) => {
         const cardContainer = cloneTemplate('#card-catalog');
-        const card = new CardCatalog(cardContainer, events);
-        return card.render(product);
+        const card = new CardCatalog(cardContainer, events, { onClick: () => events.emit('card:select', product) });
+        card.title = product.title;
+        card.price = product.price;
+        card.category = product.category;
+        card.image = product.image;
+        return cardContainer;
     });
     gallery.catalog = cards;
 }
@@ -83,7 +87,10 @@ events.on('buyer:changed', () => {
     basketView.render({ items: basket.items.map((item, index) => { 
         const cardContainer = cloneTemplate('#card-basket'); 
         const card = new CardBasket(cardContainer, events, {onDelete: () => events.emit('basket:remove', { id: item.id })}); 
-        card.render({ ...item, index: index + 1 }); return cardContainer; }), 
+        card.title = item.title;
+        card.price = item.price;
+        card.index = index + 1;
+        return cardContainer; }), 
         total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
     // Добавлена логика перерендеринга открытых форм при изменении данных покупателя
     if (currentOrderForm) {
@@ -109,7 +116,9 @@ events.on('basket:changed', () => {
         modal.contentElement = basketView.render({ items: basket.items.map((item, index) => { 
             const cardContainer = cloneTemplate('#card-basket'); 
             const card = new CardBasket(cardContainer, events, {onDelete: () => events.emit('basket:remove', { id: item.id })}); 
-            card.render({ ...item, index: index + 1 }); 
+            card.title = item.title;
+            card.price = item.price;
+            card.index = index + 1;
             return cardContainer; }), total: basket.total });
     }
     if (currentCardPreview) {
@@ -118,15 +127,15 @@ events.on('basket:changed', () => {
 });
 
 // Обработчик: открытие модального окна с CardPreview при выборе товара (по id)
-events.on('card:select', ({ id }: { id: string }) => {
-    const product = catalog.getProductById(id);
-    if (product) {
+events.on('card:select', (product: IProduct) => {
+    // const product = catalog.getProductById(id);
+    // if (product) {
         const previewContainer = cloneTemplate('#card-preview');
         const cardPreview = new CardPreview(previewContainer, events, basket);
-        modal.contentElement = cardPreview.render({ ...product, inBasket: basket.hasItem(id) }); // Исправлено: разметка получается из компонента через render
+        modal.contentElement = cardPreview.render({ ...product, inBasket: basket.hasItem(product.id) }); // Исправлено: разметка получается из компонента через render
         currentCardPreview = cardPreview;
         modal.open();
-    }
+    // }
 });
 
 // Обработчик: добавление товара в корзину
@@ -143,7 +152,9 @@ events.on('basket:open', () => {
     modal.contentElement = basketView.render({ items: basket.items.map((item, index) => { 
         const cardContainer = cloneTemplate('#card-basket'); 
         const card = new CardBasket(cardContainer, events, {onDelete: () => events.emit('basket:remove', { id: item.id })}); 
-        card.render({ ...item, index: index + 1 }); 
+        card.title = item.title;
+        card.price = item.price;
+        card.index = index + 1;
         return cardContainer; }), total: basket.total }); // Исправлено: разметка получается из компонента через render
     isBasketOpen = true;
     modal.open();
@@ -242,6 +253,7 @@ events.on('modal:close', () => {
     currentOrderForm = null;
     currentContactsForm = null;
 });
+
 
 // Выполнение запроса на получение товаров
 apiService.getProducts()

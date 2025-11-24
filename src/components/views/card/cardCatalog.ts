@@ -1,26 +1,23 @@
 import { Card } from "./card";
-import { IProduct } from "../../../types";
 import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 import { categoryMap, CDN_URL } from "../../../utils/constants";
+
+type categoryKey = keyof typeof categoryMap;
 
 export class CardCatalog extends Card {
     protected categoryElement: HTMLElement;
     protected imageElement: HTMLImageElement;
 
-    constructor(container: HTMLElement, events: IEvents) {
+    constructor(container: HTMLElement, events: IEvents, protected actions?: {onClick?: () => void}) {
         super(container, events);
 
         this.categoryElement = ensureElement<HTMLElement>('.card__category', this.container);
         this.imageElement = ensureElement<HTMLImageElement>('.card__image', this.container);
 
-        // Клик-обработчик только в этом классе
-        this.container.addEventListener('click', () => {
-            const id = this.container.dataset.id;
-            if (id) {
-                this.events!.emit('card:select', { id });
-            }
-        });
+        if (actions?.onClick) {
+            this.container.addEventListener('click', actions.onClick);
+        }
     }
 
     set image(value: string) {
@@ -31,15 +28,11 @@ export class CardCatalog extends Card {
     // Переопределение для стилей категории
     set category(value: string) {
         this.categoryElement.textContent = value;
-        const className = categoryMap[value as keyof typeof categoryMap];
-        if (className) {
-            this.categoryElement.classList.add(className);
+        for (const key in categoryMap) {
+            this.categoryElement.classList.toggle(
+                categoryMap[key as categoryKey],
+                key === value
+            );
         }
-    }
-
-    render(product: IProduct): HTMLElement {
-        super.render(product);
-        this.container.dataset.id = product.id;
-        return this.container;
     }
 }
