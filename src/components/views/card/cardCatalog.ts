@@ -1,16 +1,18 @@
 import { Card } from "./card";
-import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 import { categoryMap, CDN_URL } from "../../../utils/constants";
+import { IProduct } from "../../../types";
 
 type categoryKey = keyof typeof categoryMap;
 
-export class CardCatalog extends Card {
+export type TCardCatalog = Pick<IProduct, 'title' | 'price' | 'category' | 'image'>;
+
+export class CardCatalog extends Card<TCardCatalog> {
     protected categoryElement: HTMLElement;
     protected imageElement: HTMLImageElement;
 
-    constructor(container: HTMLElement, events: IEvents, protected actions?: {onClick?: () => void}) {
-        super(container, events);
+    constructor(container: HTMLElement, protected actions?: {onClick?: () => void}) {
+        super(container);
 
         this.categoryElement = ensureElement<HTMLElement>('.card__category', this.container);
         this.imageElement = ensureElement<HTMLImageElement>('.card__image', this.container);
@@ -21,8 +23,7 @@ export class CardCatalog extends Card {
     }
 
     set image(value: string) {
-        this.imageElement.src = CDN_URL + value;
-        this.imageElement.alt = this.titleElement.textContent || '';
+        this.setImage(this.imageElement, CDN_URL + value, this.titleElement.textContent || '');
     }
 
     // Переопределение для стилей категории

@@ -1,12 +1,11 @@
 import { Component } from "../../base/component";
-import { IProduct } from "../../../types";
 import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 
-export class Card extends Component<IProduct> {
+export class Card<T> extends Component<T> {
     protected titleElement: HTMLElement;
     protected priceElement: HTMLElement;
-    protected events?: IEvents; // Для эмитов в наследниках
+    protected events?: IEvents;
 
     constructor(container: HTMLElement, events?: IEvents) {
         super(container);
@@ -22,5 +21,10 @@ export class Card extends Component<IProduct> {
 
     set price(value: number | null) {
         this.priceElement.textContent = value !== null ? `${value} синапсов` : 'Бесценно';
+    }
+
+    protected setImage(element: HTMLImageElement, src: string, alt: string = ''): void {
+        element.src = src;
+        element.alt = alt;
     }
 }
