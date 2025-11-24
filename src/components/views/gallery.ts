@@ -1,12 +1,10 @@
-export class Gallery {
-    private catalogElement: HTMLElement;
+import { Component } from "../base/component";
 
-    // Конструктор принимает HTMLElement
+export class Gallery extends Component<unknown> {
     constructor(container: HTMLElement) {
-        this.catalogElement = container;
+        super(container);
     }
-
     set catalog(items: HTMLElement[]) {
-        this.catalogElement.replaceChildren(...items);
+        this.container.replaceChildren(...items);
     }
 }
