@@ -82,7 +82,7 @@ events.on('buyer:changed', () => {
     header.counter = basket.items.length; // Обновление счетчика в обработчике события изменения модели (используем метод модели)
     basketView.render({ items: basket.items.map((item, index) => { 
         const cardContainer = cloneTemplate('#card-basket'); 
-        const card = new CardBasket(cardContainer, events); 
+        const card = new CardBasket(cardContainer, events, {onDelete: () => events.emit('basket:remove', { id: item.id })}); 
         card.render({ ...item, index: index + 1 }); return cardContainer; }), 
         total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
     // Добавлена логика перерендеринга открытых форм при изменении данных покупателя
@@ -108,7 +108,7 @@ events.on('basket:changed', () => {
     if (isBasketOpen) {
         modal.contentElement = basketView.render({ items: basket.items.map((item, index) => { 
             const cardContainer = cloneTemplate('#card-basket'); 
-            const card = new CardBasket(cardContainer, events); 
+            const card = new CardBasket(cardContainer, events, {onDelete: () => events.emit('basket:remove', { id: item.id })}); 
             card.render({ ...item, index: index + 1 }); 
             return cardContainer; }), total: basket.total });
     }
@@ -142,7 +142,7 @@ events.on('basket:add', ({ id }: { id: string }) => {
 events.on('basket:open', () => {
     modal.contentElement = basketView.render({ items: basket.items.map((item, index) => { 
         const cardContainer = cloneTemplate('#card-basket'); 
-        const card = new CardBasket(cardContainer, events); 
+        const card = new CardBasket(cardContainer, events, {onDelete: () => events.emit('basket:remove', { id: item.id })}); 
         card.render({ ...item, index: index + 1 }); 
         return cardContainer; }), total: basket.total }); // Исправлено: разметка получается из компонента через render
     isBasketOpen = true;
