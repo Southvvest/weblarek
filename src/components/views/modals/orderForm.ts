@@ -40,9 +40,4 @@ export class OrderForm extends Form<OrderFormData> {
     set address(value: string) {
         this.addressInput.value = value;
     }
-
-    render(data?: OrderFormData): HTMLElement {
-        super.render(data);
-        return this.container;
-    }
 }

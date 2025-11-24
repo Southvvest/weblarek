@@ -31,9 +31,4 @@ export class ContactsForm extends Form<ContactsFormData> {
     set phone(value: string) {
         this.phoneInput.value = value;
     }
-
-    render(data?: ContactsFormData): HTMLElement {
-        super.render(data);
-        return this.container;
-    }
 }

@@ -26,9 +26,4 @@ export class OrderSuccess extends Component<ISuccessData> {
     set total(value: number) {
         this.descriptionElement.textContent = `Списано ${value} синапсов`;
     }
-
-    render(data?: Partial<ISuccessData>): HTMLElement {
-        super.render(data);
-        return this.container;
-    }
 }

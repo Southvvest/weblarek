@@ -30,15 +30,18 @@ export class Basket extends Component<BasketData> {
         this.totalElement.textContent = `${value} синапсов`;
     }
 
-    render(data: BasketData): HTMLElement {
-        if (data.items.length === 0) {
+    set items(value: HTMLElement[]) {
+        if (value.length === 0) {
             this.listElement.innerHTML = '<p>Корзина пуста</p>';
             this.orderButton.disabled = true;
         } else {
             this.orderButton.disabled = false;
-            this.listElement.replaceChildren(...data.items);
+            this.listElement.replaceChildren(...value);
         }
-        this.total = data.total;
+    }
+
+    render(data: BasketData): HTMLElement {
+        super.render(data);
         return this.container;
     }
 }

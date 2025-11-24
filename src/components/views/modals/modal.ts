@@ -2,7 +2,11 @@ import { Component } from "../../base/component";
 import { IEvents } from "../../base/events";
 import { ensureElement } from "../../../utils/utils";
 
-export class Modal extends Component<unknown> {
+interface IModalData {
+    contentElement?: HTMLElement;
+}
+
+export class Modal extends Component<IModalData> {
     protected contentSlot: HTMLElement;
     protected closeButton: HTMLElement;
     protected events: IEvents;
@@ -28,17 +32,10 @@ export class Modal extends Component<unknown> {
 
     open(): void {
         this.container.classList.add('modal_active');
-        // this.events?.emit('modal:open');
     }
 
     close(): void {
         this.container.classList.remove('modal_active');
-        this.events?.emit('modal:close');
         this.contentSlot.innerHTML = ''; // Очистка содержимого
-    }
-
-    render(data?: Partial<unknown>): HTMLElement {
-        // super.render(data);
-        return this.container;
     }
 }
