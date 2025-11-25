@@ -40,7 +40,7 @@ export class Basket extends Component<BasketData> {
         }
     }
 
-    render(data: BasketData): HTMLElement {
+    render(data?: BasketData): HTMLElement {
         super.render(data);
         return this.container;
     }

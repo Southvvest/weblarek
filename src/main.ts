@@ -31,6 +31,7 @@ const apiService = new ApiService(api); // Теперь принимает IApi
 const catalog = new Catalog(events); // Добавлен events
 const basket = new SelectedCart(events);
 const buyer = new Buyer(events); // Добавлен events
+
 // Передача HTMLElement
 const headerElement = ensureElement('.header');
 const header = new Header(events, headerElement);
@@ -144,13 +145,7 @@ events.on('basket:add', ({ id }: { id: string }) => {
 
 // Обработчик: открытие корзины
 events.on('basket:open', () => {
-    modal.contentElement = basketView.render({ items: basket.items.map((item, index) => { 
-        const cardContainer = cloneTemplate('#card-basket'); 
-        const card = new CardBasket(cardContainer, {onDelete: () => events.emit('basket:remove', { id: item.id })}); 
-        card.title = item.title;
-        card.price = item.price;
-        card.index = index + 1;
-        return cardContainer; }), total: basket.total });
+    modal.contentElement = basketView.render();
     modal.open();
 });
 
@@ -182,7 +177,6 @@ events.on('order:submit', () => {
     const contactsErrors = [errors.email, errors.phone].filter(Boolean).join('; ');
     const contactsValid = !errors.email && !errors.phone;
     modal.contentElement = contactsForm.render({ email: data.email, phone: data.phone, errors: contactsErrors, valid: contactsValid });
-
     modal.open();
 });
 
