@@ -34,7 +34,6 @@ const buyer = new Buyer(events); // Добавлен events
 // Передача HTMLElement
 const headerElement = ensureElement('.header');
 const header = new Header(events, headerElement);
-header.counter = 0; // Начальный счетчик
 
 // Передача HTMLElement
 const galleryElement = ensureElement('.gallery');
@@ -44,6 +43,15 @@ const gallery = new Gallery(galleryElement);
 // Статичные компоненты — это все, кроме карточек товаров для каталога (CardCatalog) и корзины (CardBasket), т.е. тех, которые создаются в большом количестве одновременно.
 const basketContainer = cloneTemplate('#basket');
 const basketView = new Basket(basketContainer, events); // Создание экземпляра один раз
+
+const successContainer = cloneTemplate('#success');
+const orderSuccess = new OrderSuccess(successContainer, events); // Создание глобального экземпляра один раз
+
+const orderContainer = cloneTemplate('#order');
+const orderForm = new OrderForm(orderContainer, events); // Создание экземпляра один раз
+
+const contactsContainer = cloneTemplate('#contacts');
+const contactsForm = new ContactsForm(contactsContainer, events); // Создание экземпляра один раз
 
 // Флаги для отслеживания состояния модала
 let isBasketOpen = false;
@@ -66,6 +74,11 @@ function renderCatalog(products: IProduct[]): void {
     gallery.catalog = cards;
 }
 
+// Обработчик: обновление каталога после сохранения товаров в модели
+events.on('catalog:updated', () => {
+    renderCatalog(catalog.getProducts());
+});
+
 // Обработчик: изменение данных покупателя (из форм)
 events.on('buyer:payment', ({ payment }: { payment: TPayment }) => {
     buyer.setData({ payment });
@@ -84,15 +97,6 @@ events.on('buyer:phone', ({ phone }: { phone: string }) => {
 });
 
 events.on('buyer:changed', () => {
-    header.counter = basket.items.length; // Обновление счетчика в обработчике события изменения модели (используем метод модели)
-    basketView.render({ items: basket.items.map((item, index) => { 
-        const cardContainer = cloneTemplate('#card-basket'); 
-        const card = new CardBasket(cardContainer, {onDelete: () => events.emit('basket:remove', { id: item.id })}); 
-        card.title = item.title;
-        card.price = item.price;
-        card.index = index + 1;
-        return cardContainer; }), 
-        total: basket.total }); // Рендер корзины при изменении (без рендера при открытии)
     // Добавлена логика перерендеринга открытых форм при изменении данных покупателя
     if (currentOrderForm) {
         const data = buyer.getData();
@@ -136,8 +140,6 @@ events.on('basket:changed', () => {
 
 // Обработчик: открытие модального окна с CardPreview при выборе товара (по id)
 events.on('card:select', (product: IProduct) => {
-    // const product = catalog.getProductById(id);
-    // if (product) {
         currentProduct = product;
         const previewContainer = cloneTemplate('#card-preview');
         currentCardPreview = new CardPreview(previewContainer, { onToggle: () => events.emit('basket:toggle', { id: product.id }) });
@@ -187,8 +189,6 @@ events.on('basket:order', () => {
     const errors = buyer.validate();
     const orderErrors = [errors.payment, errors.address].filter(Boolean).join('; ');
     const orderValid = !errors.payment && !errors.address;
-    const orderContainer = cloneTemplate('#order');
-    const orderForm = new OrderForm(orderContainer, events);
     modal.contentElement = orderForm.render({ payment: data.payment, address: data.address, errors: orderErrors, valid: orderValid }); // Исправлено: разметка получается из компонента через render, локальное создание
     currentOrderForm = orderForm; // Добавлено: установка флага для текущей формы
     modal.open();
@@ -200,16 +200,12 @@ events.on('order:submit', () => {
     const relevantErrors = ['payment', 'address'].filter(key => errors[key as keyof IValidationError]);
     if (relevantErrors.length > 0) {
         const orderErrors = relevantErrors.map(key => errors[key as keyof IValidationError]).filter(Boolean).join('; ');
-        const orderContainer = cloneTemplate('#order');
-        const orderForm = new OrderForm(orderContainer, events);
         modal.contentElement = orderForm.render({ ...buyer.getData(), errors: orderErrors, valid: false }); // Рендер с ошибками для текущей формы
         return;
     }
     const data = buyer.getData();
     const contactsErrors = [errors.email, errors.phone].filter(Boolean).join('; ');
     const contactsValid = !errors.email && !errors.phone;
-    const contactsContainer = cloneTemplate('#contacts');
-    const contactsForm = new ContactsForm(contactsContainer, events);
     modal.contentElement = contactsForm.render({ email: data.email, phone: data.phone, errors: contactsErrors, valid: contactsValid }); // Исправлено: разметка получается из компонента через render, локальное создание
     currentContactsForm = contactsForm; // Добавлено: установка флага для текущей формы
     currentOrderForm = null; // Сброс флага предыдущей формы
@@ -218,15 +214,6 @@ events.on('order:submit', () => {
 
 // Обработчик: отправка заказа
 events.on('contacts:submit', () => {
-    const errors = buyer.validate();
-    const relevantErrors = ['email', 'phone'].filter(key => errors[key as keyof IValidationError]);
-    if (relevantErrors.length > 0) {
-        const contactsErrors = relevantErrors.map(key => errors[key as keyof IValidationError]).filter(Boolean).join('; ');
-        const contactsContainer = cloneTemplate('#contacts');
-        const contactsForm = new ContactsForm(contactsContainer, events);
-        modal.contentElement = contactsForm.render({ ...buyer.getData(), errors: contactsErrors, valid: false }); // Рендер с ошибками для текущей формы
-        return;
-    }
     const orderData: IOrder = {
         ...buyer.getData(),
         items: basket.items.map(p => p.id),
@@ -236,9 +223,7 @@ events.on('contacts:submit', () => {
         const total = response.total; // Используем total из ответа сервера для отображения
         basket.clear();
         header.counter = 0;
-        const successContainer = cloneTemplate('#success');
-        const orderSuccess = new OrderSuccess(successContainer, events);
-        modal.contentElement = orderSuccess.render({ total }); // Исправлено: разметка получается из компонента через render, локальное создание
+        modal.contentElement = orderSuccess.render({ total }); // Исправлено: разметка получается из компонента через render, локальное создание - исправлено на использование глобального
         currentContactsForm = null; // Сброс флага при завершении
         modal.open();
     });
@@ -257,20 +242,10 @@ events.on('basket:toggle', ({ id }: { id: string }) => {
         const product = catalog.getProductById(id);
         if (product) {
             basket.addItem(product);
-            modal.close(); // Добавлено: закрытие модала после добавления товара
         }
     }
+    modal.close();
 });
-
-// Обработчики событий
-events.on('modal:close', () => {
-    isBasketOpen = false;
-    currentCardPreview = null;
-    currentOrderForm = null;
-    currentContactsForm = null;
-    currentProduct = null;
-});
-
 
 // Выполнение запроса на получение товаров
 apiService.getProducts()
@@ -279,7 +254,6 @@ apiService.getProducts()
     catalog.setProducts(products);
     // Вывод сохранённого каталога в консоль для проверки
     console.log('Каталог товаров:', catalog.getProducts());
-    renderCatalog(products); // Вызов рендера каталога после загрузки товаров
   })
   .catch(error => {
     console.error('Ошибка при получении товаров:', error);
